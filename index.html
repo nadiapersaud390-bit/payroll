@@ -1,26 +1,1646 @@
 <!doctype html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#14213d"><title>Payroll Manager</title>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-<style>:root{font-family:Inter,Arial,sans-serif;color:#14213d;background:#f4f7fb}*{box-sizing:border-box}body{margin:0}.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}aside{background:#14213d;color:#fff;padding:28px 18px}.brand{font-size:22px;font-weight:800;margin:0 10px 32px}.brand span{color:#fca311}nav{display:grid;gap:8px}nav button{border:0;background:transparent;color:#cbd5e1;padding:13px 14px;text-align:left;border-radius:10px;font-size:15px;cursor:pointer}nav button.active,nav button:hover{background:#25365d;color:#fff}main{padding:28px 34px;overflow:hidden}header{margin-bottom:22px}h1{margin:0;font-size:30px}header p{margin:6px 0 0;color:#64748b}.card{background:#fff;border:1px solid #e5eaf1;border-radius:16px;padding:20px;box-shadow:0 8px 26px #14213d0f}.grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:18px;align-items:end;margin-bottom:18px}.split{display:grid;grid-template-columns:380px 1fr;gap:20px}label{display:grid;gap:7px;font-size:13px;font-weight:700;color:#475569}input,select{width:100%;border:1px solid #cbd5e1;border-radius:9px;padding:10px 11px;font:inherit;background:#fff}input:focus,select:focus{outline:2px solid #fca31133;border-color:#fca311}.metric{display:grid;gap:4px}.metric span,.totals span{font-size:13px;color:#64748b}.metric strong,.totals strong{font-size:25px}.table-wrap{overflow:auto;padding:0}table{width:100%;border-collapse:collapse;min-width:820px}th,td{padding:14px 16px;border-bottom:1px solid #edf1f6;text-align:left}th{font-size:12px;text-transform:uppercase;color:#64748b;background:#f8fafc}td small{display:block;color:#64748b;margin-top:3px}.totals{display:flex;justify-content:flex-end;align-items:center;gap:34px;margin-top:18px}.totals div{display:grid}.btn{border:0;border-radius:10px;padding:11px 16px;font-weight:800;cursor:pointer}.primary{background:#fca311;color:#14213d}.dark{background:#14213d;color:#fff}.danger{background:#fff1f2;color:#be123c;border:1px solid #fecdd3;border-radius:8px;padding:7px 10px;cursor:pointer}.form{display:grid;gap:14px}.employee-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #edf1f6}.employee-row div{display:grid;gap:4px}.employee-row span{font-size:13px;color:#64748b}.actions{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}.select-all{display:flex;align-items:center;gap:8px;margin-right:auto;font-size:14px;font-weight:700;color:#475569}.row-check,#selectAllHistory,.column-check{width:18px;height:18px;padding:0;cursor:pointer}.export-options{margin-bottom:14px;padding:16px 18px}.export-options h3{margin:0 0 12px;font-size:15px}.column-options{display:flex;flex-wrap:wrap;gap:10px 18px}.column-option{display:flex;grid-template-columns:none;align-items:center;gap:7px;font-size:13px;font-weight:700}.notice{padding:12px 15px;background:#ecfdf5;border:1px solid #a7f3d0;color:#047857;border-radius:10px;margin-bottom:16px}.hidden{display:none!important}.empty{padding:24px;color:#64748b}.section-title{margin-top:0}@media(max-width:1100px){.grid{grid-template-columns:1fr 1fr}.metric{grid-column:span 2}}@media(max-width:900px){.app{grid-template-columns:1fr}aside{padding:15px}.brand{margin-bottom:14px}nav{grid-template-columns:repeat(4,1fr)}nav button{text-align:center;font-size:12px;padding:10px 5px}main{padding:20px 14px}.grid,.split{grid-template-columns:1fr}.metric{grid-column:auto}.totals{justify-content:space-between;gap:10px;flex-wrap:wrap}.select-all{width:100%}}</style></head>
-<body><div class="app"><aside><div class="brand">Payroll<span>Manager</span></div><nav><button data-tab="payroll" class="active">Weekly Payroll</button><button data-tab="employees">Employees</button><button data-tab="summary">Employee Summary</button><button data-tab="history">Payroll History</button></nav></aside><main>
-<header><h1 id="pageTitle">Weekly Payroll</h1><p>Realtime payroll records powered by Firebase.</p></header><div id="notice" class="notice hidden"></div>
-<section id="payrollSection"><div class="card grid"><label>Employee<select id="employeeSelect"><option value="">Select employee</option></select></label><label>Payroll start date<input id="payrollStartDate" type="date"></label><label>Payroll end date<input id="payrollEndDate" type="date"></label><div class="metric"><span>Hourly rate</span><strong id="rateDisplay">$0.00</strong></div></div><div class="card table-wrap"><table><thead><tr><th>Day</th><th>Clock In</th><th>Clock Out</th><th>Break (min)</th><th>Hours</th></tr></thead><tbody id="timeRows"></tbody></table></div><div class="totals"><div><span>Total hours</span><strong id="totalHours">0.00</strong></div><div><span>Gross pay</span><strong id="grossPay">$0.00</strong></div><button id="savePayroll" class="btn primary">Save Payroll</button></div></section>
-<section id="employeesSection" class="hidden"><div class="split"><form id="employeeForm" class="card form"><h2 class="section-title">Add new employee</h2><label>Full name<input id="empName" required></label><label>Employee ID<input id="empNumber"></label><label>Email<input id="empEmail" type="email"></label><label>Phone<input id="empPhone"></label><label>Hourly rate<input id="empRate" required type="number" min="0" step="0.01"></label><button class="btn primary">Add Employee</button></form><div class="card"><h2 class="section-title">All employees</h2><div id="employeeList"></div></div></div></section>
-<section id="summarySection" class="hidden"><div class="actions"><button id="summaryExcel" class="btn dark">Export Excel</button><button id="summaryPdf" class="btn dark">Export PDF</button></div><div class="card table-wrap"><table><thead><tr><th>Employee</th><th>Payroll Records</th><th>Total Hours</th><th>Total Earned</th></tr></thead><tbody id="summaryRows"></tbody></table></div></section>
-<section id="historySection" class="hidden"><div class="card export-options"><h3>Choose columns to export</h3><div class="column-options"><label class="column-option"><input class="column-check" type="checkbox" value="employeeName" checked> Employee Name</label><label class="column-option"><input class="column-check" type="checkbox" value="employeeNumber"> Employee ID</label><label class="column-option"><input class="column-check" type="checkbox" value="payrollStartDate"> Payroll Start</label><label class="column-option"><input class="column-check" type="checkbox" value="payrollEndDate"> Payroll End</label><label class="column-option"><input class="column-check" type="checkbox" value="hourlyRate"> Hourly Rate</label><label class="column-option"><input class="column-check" type="checkbox" value="totalHours" checked> Hours Worked</label><label class="column-option"><input class="column-check" type="checkbox" value="grossPay" checked> Total Earned</label></div></div><div class="actions"><label class="select-all"><input id="selectAllHistory" type="checkbox"> Select all rows</label><button id="historyExcel" class="btn dark">Export Selected Excel</button><button id="historyPdf" class="btn dark">Export Selected PDF</button></div><div class="card table-wrap"><table><thead><tr><th><input id="selectAllHistoryTable" type="checkbox" class="row-check"></th><th>Employee</th><th>Payroll Start</th><th>Payroll End</th><th>Rate</th><th>Hours</th><th>Amount Earned</th><th></th></tr></thead><tbody id="historyRows"></tbody></table></div></section>
-</main></div>
-<script type="module">
-import{initializeApp}from'https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js';import{getDatabase,ref,onValue,push,set,remove}from'https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js';
-const firebaseConfig={apiKey:'AIzaSyDnyxAjuambKegUkyMc-yWHEdMMRgdgsVU',authDomain:'payroll-fd56f.firebaseapp.com',projectId:'payroll-fd56f',storageBucket:'payroll-fd56f.firebasestorage.app',messagingSenderId:'191190737335',appId:'1:191190737335:web:5ad07a94330b47ff024832',measurementId:'G-BNYCJ00ZZL',databaseURL:'https://payroll-fd56f-default-rtdb.firebaseio.com'};const db=getDatabase(initializeApp(firebaseConfig));const DAYS=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];let employees={},history={};const $=id=>document.getElementById(id);const money=n=>new Intl.NumberFormat('en-US',{style:'currency',currency:'USD'}).format(Number(n||0));
-const today=new Date(),endDate=today.toISOString().slice(0,10),start=new Date(today);start.setDate(today.getDate()-6);$('payrollStartDate').value=start.toISOString().slice(0,10);$('payrollEndDate').value=endDate;$('timeRows').innerHTML=DAYS.map(d=>`<tr data-day="${d}"><td><strong>${d}</strong></td><td><input class="clock-in" type="time"></td><td><input class="clock-out" type="time"></td><td><input class="break" type="number" min="0" value="0"></td><td class="hours">0.00</td></tr>`).join('');
-function hoursBetween(a,b,br=0){if(!a||!b)return 0;const[ah,am]=a.split(':').map(Number),[bh,bm]=b.split(':').map(Number);let m=bh*60+bm-(ah*60+am);if(m<0)m+=1440;return Math.max(0,m-Number(br||0))/60}function selectedEmployee(){return employees[$('employeeSelect').value]||null}function calculate(){let total=0;document.querySelectorAll('#timeRows tr').forEach(r=>{const h=hoursBetween(r.querySelector('.clock-in').value,r.querySelector('.clock-out').value,r.querySelector('.break').value);r.querySelector('.hours').textContent=h.toFixed(2);total+=h});$('totalHours').textContent=total.toFixed(2);$('grossPay').textContent=money(total*Number(selectedEmployee()?.hourlyRate||0));return total}document.querySelectorAll('#timeRows input').forEach(i=>i.addEventListener('input',calculate));$('employeeSelect').onchange=()=>{$('rateDisplay').textContent=money(selectedEmployee()?.hourlyRate);calculate()};
-function notice(msg){$('notice').textContent=msg;$('notice').classList.remove('hidden');setTimeout(()=>$('notice').classList.add('hidden'),3500)}function showTab(tab){const names={payroll:'Weekly Payroll',employees:'Employee Setup',summary:'Employee Summary',history:'Payroll History'};$('pageTitle').textContent=names[tab];['payroll','employees','summary','history'].forEach(x=>$(x+'Section').classList.toggle('hidden',x!==tab));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab))}document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>showTab(b.dataset.tab));
-onValue(ref(db,'employees'),s=>{employees=s.val()||{};renderEmployees()});onValue(ref(db,'payrollHistory'),s=>{history=s.val()||{};renderHistory();renderSummary()});
-function renderEmployees(){const list=Object.entries(employees);$('employeeSelect').innerHTML='<option value="">Select employee</option>'+list.map(([id,e])=>`<option value="${id}">${escapeHtml(e.name)} — ${money(e.hourlyRate)}/hr</option>`).join('');$('employeeList').innerHTML=list.length?list.map(([id,e])=>`<div class="employee-row"><div><strong>${escapeHtml(e.name)}</strong><span>${escapeHtml(e.employeeId||'No employee ID')} · ${money(e.hourlyRate)}/hr</span></div><button class="danger" data-delete-employee="${id}">Delete</button></div>`).join(''):'<p class="empty">No employees added yet.</p>';document.querySelectorAll('[data-delete-employee]').forEach(b=>b.onclick=async()=>{if(confirm('Delete this employee? Existing payroll history will remain.'))await remove(ref(db,'employees/'+b.dataset.deleteEmployee))})}
-$('employeeForm').onsubmit=async e=>{e.preventDefault();const name=$('empName').value.trim(),rate=Number($('empRate').value);if(!name||rate<0)return;await set(push(ref(db,'employees')),{name,employeeId:$('empNumber').value.trim(),email:$('empEmail').value.trim(),phone:$('empPhone').value.trim(),hourlyRate:rate,createdAt:new Date().toISOString()});e.target.reset();notice('Employee added.')};
-$('savePayroll').onclick=async()=>{const emp=selectedEmployee(),total=calculate(),payrollStartDate=$('payrollStartDate').value,payrollEndDate=$('payrollEndDate').value;if(!emp)return notice('Select an employee first.');if(!payrollStartDate||!payrollEndDate)return notice('Select both payroll dates.');if(payrollStartDate>payrollEndDate)return notice('Start date cannot be after end date.');if(total<=0)return notice('Enter at least one work shift.');const times={},dayHours={};document.querySelectorAll('#timeRows tr').forEach(r=>{const d=r.dataset.day,a=r.querySelector('.clock-in').value,b=r.querySelector('.clock-out').value,br=Number(r.querySelector('.break').value||0);times[d]={in:a,out:b,breakMinutes:br};dayHours[d]=hoursBetween(a,b,br)});await set(push(ref(db,'payrollHistory')),{employeeId:$('employeeSelect').value,employeeName:emp.name,employeeNumber:emp.employeeId||'',hourlyRate:Number(emp.hourlyRate),payrollStartDate,payrollEndDate,weekEnding:payrollEndDate,times,dayHours,totalHours:Number(total.toFixed(2)),grossPay:Number((total*Number(emp.hourlyRate)).toFixed(2)),createdAt:new Date().toISOString()});document.querySelectorAll('#timeRows input').forEach(i=>i.value=i.classList.contains('break')?'0':'');calculate();notice('Payroll saved.');showTab('history')};
-function historyArray(){return Object.entries(history).map(([id,v])=>({id,...v})).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)))}function renderHistory(){const rows=historyArray();$('historyRows').innerHTML=rows.length?rows.map(r=>`<tr><td><input type="checkbox" class="row-check history-row-check" value="${r.id}"></td><td><strong>${escapeHtml(r.employeeName)}</strong><small>${escapeHtml(r.employeeNumber||'')}</small></td><td>${r.payrollStartDate||''}</td><td>${r.payrollEndDate||r.weekEnding||''}</td><td>${money(r.hourlyRate)}</td><td>${Number(r.totalHours||0).toFixed(2)}</td><td>${money(r.grossPay)}</td><td><button class="danger" data-delete-payroll="${r.id}">Delete</button></td></tr>`).join(''):'<tr><td colspan="8" class="empty">No payroll history yet.</td></tr>';$('selectAllHistory').checked=false;$('selectAllHistoryTable').checked=false;document.querySelectorAll('[data-delete-payroll]').forEach(b=>b.onclick=async()=>{if(confirm('Permanently delete this payroll record?'))await remove(ref(db,'payrollHistory/'+b.dataset.deletePayroll))});document.querySelectorAll('.history-row-check').forEach(c=>c.onchange=syncSelectAll)}function setAllHistoryRows(v){document.querySelectorAll('.history-row-check').forEach(c=>c.checked=v);$('selectAllHistory').checked=v;$('selectAllHistoryTable').checked=v}function syncSelectAll(){const b=[...document.querySelectorAll('.history-row-check')],all=b.length&&b.every(c=>c.checked);$('selectAllHistory').checked=all;$('selectAllHistoryTable').checked=all}$('selectAllHistory').onchange=e=>setAllHistoryRows(e.target.checked);$('selectAllHistoryTable').onchange=e=>setAllHistoryRows(e.target.checked);function selectedHistoryRows(){const ids=new Set([...document.querySelectorAll('.history-row-check:checked')].map(c=>c.value));return historyArray().filter(r=>ids.has(r.id))}
-function summaryArray(){const x={};historyArray().forEach(r=>{if(!x[r.employeeId])x[r.employeeId]={employeeName:r.employeeName,payrollCount:0,hours:0,earnings:0};x[r.employeeId].payrollCount++;x[r.employeeId].hours+=Number(r.totalHours||0);x[r.employeeId].earnings+=Number(r.grossPay||0)});Object.entries(employees).forEach(([id,e])=>{if(!x[id])x[id]={employeeName:e.name,payrollCount:0,hours:0,earnings:0}});return Object.values(x).sort((a,b)=>a.employeeName.localeCompare(b.employeeName))}function renderSummary(){const rows=summaryArray();$('summaryRows').innerHTML=rows.length?rows.map(r=>`<tr><td><strong>${escapeHtml(r.employeeName)}</strong></td><td>${r.payrollCount}</td><td>${r.hours.toFixed(2)}</td><td>${money(r.earnings)}</td></tr>`).join(''):'<tr><td colspan="4" class="empty">No employees or payroll records yet.</td></tr>'}
-const COLUMN_DEFS={employeeName:{label:'Employee Name',value:r=>r.employeeName||''},employeeNumber:{label:'Employee ID',value:r=>r.employeeNumber||''},payrollStartDate:{label:'Payroll Start',value:r=>r.payrollStartDate||''},payrollEndDate:{label:'Payroll End',value:r=>r.payrollEndDate||r.weekEnding||''},hourlyRate:{label:'Hourly Rate',value:r=>Number(r.hourlyRate||0),pdf:r=>money(r.hourlyRate)},totalHours:{label:'Hours Worked',value:r=>Number(r.totalHours||0),pdf:r=>Number(r.totalHours||0).toFixed(2)},grossPay:{label:'Total Earned',value:r=>Number(r.grossPay||0),pdf:r=>money(r.grossPay)}};function selectedColumns(){return[...document.querySelectorAll('.column-check:checked')].map(c=>c.value)}
-function exportExcel(rows,name,cols){const data=rows.map(r=>Object.fromEntries(cols.map(k=>[COLUMN_DEFS[k].label,COLUMN_DEFS[k].value(r)])));const ws=XLSX.utils.json_to_sheet(data),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Payroll');XLSX.writeFile(wb,name)}function exportPdf(rows,name,cols){const{jsPDF}=window.jspdf,doc=new jsPDF({orientation:cols.length>4?'landscape':'portrait'});doc.setFontSize(18);doc.text('Payroll Report',14,16);doc.autoTable({startY:22,head:[cols.map(k=>COLUMN_DEFS[k].label)],body:rows.map(r=>cols.map(k=>(COLUMN_DEFS[k].pdf||COLUMN_DEFS[k].value)(r)))});doc.save(name)}function exportSelected(type){const rows=selectedHistoryRows(),cols=selectedColumns();if(!rows.length)return notice('Select at least one payroll row.');if(!cols.length)return notice('Select at least one column to export.');type==='excel'?exportExcel(rows,'selected-payroll-history.xlsx',cols):exportPdf(rows,'selected-payroll-history.pdf',cols)}$('historyExcel').onclick=()=>exportSelected('excel');$('historyPdf').onclick=()=>exportSelected('pdf');$('summaryExcel').onclick=()=>{const rows=summaryArray().map(r=>({employeeName:r.employeeName,totalHours:r.hours,grossPay:r.earnings}));exportExcel(rows,'employee-summary.xlsx',['employeeName','totalHours','grossPay'])};$('summaryPdf').onclick=()=>{const rows=summaryArray().map(r=>({employeeName:r.employeeName,totalHours:r.hours,grossPay:r.earnings}));exportPdf(rows,'employee-summary.pdf',['employeeName','totalHours','grossPay'])};function escapeHtml(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]))}
-</script></body></html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#14213d">
+  <title>Payroll Manager</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+
+  <style>
+    :root {
+      font-family: Inter, Arial, sans-serif;
+      color: #14213d;
+      background: #f4f7fb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: 100vh;
+    }
+
+    aside {
+      background: #14213d;
+      color: white;
+      padding: 28px 18px;
+    }
+
+    .brand {
+      font-size: 22px;
+      font-weight: 800;
+      margin: 0 10px 32px;
+    }
+
+    .brand span {
+      color: #fca311;
+    }
+
+    nav {
+      display: grid;
+      gap: 8px;
+    }
+
+    nav button {
+      border: 0;
+      background: transparent;
+      color: #cbd5e1;
+      padding: 13px 14px;
+      text-align: left;
+      border-radius: 10px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    nav button.active,
+    nav button:hover {
+      background: #25365d;
+      color: white;
+    }
+
+    main {
+      padding: 28px 34px;
+      overflow: hidden;
+    }
+
+    header {
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 30px;
+    }
+
+    header p {
+      margin: 6px 0 0;
+      color: #64748b;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid #e5eaf1;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 8px 26px rgba(20, 33, 61, 0.06);
+    }
+
+    .top-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 18px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    .split {
+      display: grid;
+      grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+      gap: 20px;
+      align-items: start;
+    }
+
+    label {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    input,
+    select {
+      width: 100%;
+      height: 44px;
+      min-height: 44px;
+      max-height: 44px;
+      border: 1px solid #cbd5e1;
+      border-radius: 9px;
+      padding: 9px 11px;
+      font: inherit;
+      background: white;
+    }
+
+    input:focus,
+    select:focus {
+      outline: 2px solid rgba(252, 163, 17, 0.2);
+      border-color: #fca311;
+    }
+
+    .metric {
+      display: grid;
+      gap: 4px;
+    }
+
+    .metric span,
+    .totals span {
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .metric strong,
+    .totals strong {
+      font-size: 25px;
+    }
+
+    .week-note {
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 400;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      padding: 0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 820px;
+    }
+
+    th,
+    td {
+      padding: 14px 16px;
+      border-bottom: 1px solid #edf1f6;
+      text-align: left;
+    }
+
+    th {
+      font-size: 12px;
+      text-transform: uppercase;
+      color: #64748b;
+      background: #f8fafc;
+    }
+
+    td small {
+      display: block;
+      color: #64748b;
+      margin-top: 3px;
+    }
+
+    .totals {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 34px;
+      margin-top: 18px;
+    }
+
+    .totals div {
+      display: grid;
+    }
+
+    .btn {
+      border: 0;
+      border-radius: 10px;
+      padding: 11px 16px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .primary {
+      background: #fca311;
+      color: #14213d;
+    }
+
+    .dark {
+      background: #14213d;
+      color: white;
+    }
+
+    .secondary {
+      background: #e2e8f0;
+      color: #334155;
+    }
+
+    .danger {
+      background: #fff1f2;
+      color: #be123c;
+      border: 1px solid #fecdd3;
+      border-radius: 8px;
+      padding: 7px 10px;
+      cursor: pointer;
+    }
+
+    .edit {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 7px 10px;
+      cursor: pointer;
+    }
+
+    .employee-form-card,
+    .employee-list-card {
+      height: 560px;
+      min-height: 560px;
+      max-height: 560px;
+    }
+
+    .employee-form-card {
+      overflow-y: auto;
+    }
+
+    .employee-form {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .employee-list-card {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .employee-list-scroll {
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+      padding-right: 5px;
+    }
+
+    .employee-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid #edf1f6;
+    }
+
+    .employee-row > div:first-child {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .employee-row span {
+      font-size: 13px;
+      color: #64748b;
+      overflow-wrap: anywhere;
+    }
+
+    .employee-actions {
+      display: flex;
+      flex-direction: row;
+      gap: 7px;
+      flex-shrink: 0;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .select-all {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 8px;
+      margin-right: auto;
+      font-size: 14px;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    .row-check,
+    #selectAllHistory,
+    .column-check {
+      width: 18px;
+      height: 18px;
+      min-height: 18px;
+      max-height: 18px;
+      padding: 0;
+      cursor: pointer;
+    }
+
+    .export-options {
+      margin-bottom: 14px;
+      padding: 16px 18px;
+    }
+
+    .export-options h3 {
+      margin: 0 0 12px;
+      font-size: 15px;
+    }
+
+    .column-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 18px;
+    }
+
+    .column-option {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 7px;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .notice {
+      padding: 12px 15px;
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #047857;
+      border-radius: 10px;
+      margin-bottom: 16px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .empty {
+      padding: 24px;
+      color: #64748b;
+    }
+
+    .section-title {
+      margin: 0 0 8px;
+    }
+
+    @media (max-width: 1100px) {
+      .top-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .metric {
+        grid-column: span 2;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      aside {
+        padding: 15px;
+      }
+
+      .brand {
+        margin-bottom: 14px;
+      }
+
+      nav {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      nav button {
+        text-align: center;
+        font-size: 12px;
+        padding: 10px 5px;
+      }
+
+      main {
+        padding: 20px 14px;
+      }
+
+      .top-grid,
+      .split {
+        grid-template-columns: 1fr;
+      }
+
+      .metric {
+        grid-column: auto;
+      }
+
+      .totals {
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .select-all {
+        width: 100%;
+      }
+
+      .employee-form-card,
+      .employee-list-card {
+        height: auto;
+        min-height: 0;
+        max-height: none;
+      }
+
+      .employee-list-scroll {
+        max-height: 420px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <aside>
+      <div class="brand">Payroll<span>Manager</span></div>
+
+      <nav>
+        <button data-tab="payroll" class="active">Weekly Payroll</button>
+        <button data-tab="employees">Employees</button>
+        <button data-tab="summary">Employee Summary</button>
+        <button data-tab="history">Payroll History</button>
+      </nav>
+    </aside>
+
+    <main>
+      <header>
+        <h1 id="pageTitle">Weekly Payroll</h1>
+        <p>Realtime payroll records powered by Firebase.</p>
+      </header>
+
+      <div id="notice" class="notice hidden"></div>
+
+      <section id="payrollSection">
+        <div class="card top-grid">
+          <label>
+            Employee
+            <select id="employeeSelect">
+              <option value="">Select employee</option>
+            </select>
+          </label>
+
+          <label>
+            Payroll start date
+            <input id="payrollStartDate" type="date">
+            <span class="week-note">Week begins Saturday</span>
+          </label>
+
+          <label>
+            Payroll end date
+            <input id="payrollEndDate" type="date">
+            <span class="week-note">Week ends Friday</span>
+          </label>
+
+          <div class="metric">
+            <span>Hourly rate</span>
+            <strong id="rateDisplay">$0.00</strong>
+          </div>
+        </div>
+
+        <div class="card table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Day</th>
+                <th>Clock In</th>
+                <th>Clock Out</th>
+                <th>Break (min)</th>
+                <th>Hours</th>
+              </tr>
+            </thead>
+            <tbody id="timeRows"></tbody>
+          </table>
+        </div>
+
+        <div class="totals">
+          <div>
+            <span>Total hours</span>
+            <strong id="totalHours">0.00</strong>
+          </div>
+
+          <div>
+            <span>Gross pay</span>
+            <strong id="grossPay">$0.00</strong>
+          </div>
+
+          <button id="savePayroll" class="btn primary">
+            Save Payroll
+          </button>
+        </div>
+      </section>
+
+      <section id="employeesSection" class="hidden">
+        <div class="split">
+          <div class="card employee-form-card">
+            <form id="employeeForm" class="employee-form">
+              <h2 id="employeeFormTitle" class="section-title">
+                Add new employee
+              </h2>
+
+              <label>
+                Full name
+                <input id="empName" required>
+              </label>
+
+              <label>
+                Employee ID
+                <input id="empNumber">
+              </label>
+
+              <label>
+                Email
+                <input id="empEmail" type="email">
+              </label>
+
+              <label>
+                Phone
+                <input id="empPhone">
+              </label>
+
+              <label>
+                Hourly rate
+                <input
+                  id="empRate"
+                  required
+                  type="number"
+                  min="0"
+                  step="0.01"
+                >
+              </label>
+
+              <div class="form-actions">
+                <button
+                  id="employeeSubmitButton"
+                  class="btn primary"
+                  type="submit"
+                >
+                  Add Employee
+                </button>
+
+                <button
+                  id="cancelEmployeeEdit"
+                  class="btn secondary hidden"
+                  type="button"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card employee-list-card">
+            <h2 class="section-title">All employees</h2>
+            <div id="employeeList" class="employee-list-scroll"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="summarySection" class="hidden">
+        <div class="actions">
+          <button id="summaryExcel" class="btn dark">Export Excel</button>
+          <button id="summaryPdf" class="btn dark">Export PDF</button>
+        </div>
+
+        <div class="card table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Payroll Records</th>
+                <th>Total Hours</th>
+                <th>Total Earned</th>
+              </tr>
+            </thead>
+            <tbody id="summaryRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="historySection" class="hidden">
+        <div class="card export-options">
+          <h3>Choose columns to export</h3>
+
+          <div class="column-options">
+            <label class="column-option">
+              <input class="column-check" type="checkbox" value="employeeName" checked>
+              Employee Name
+            </label>
+
+            <label class="column-option">
+              <input class="column-check" type="checkbox" value="employeeNumber">
+              Employee ID
+            </label>
+
+            <label class="column-option">
+              <input class="column-check" type="checkbox" value="payrollStartDate">
+              Payroll Start
+            </label>
+
+            <label class="column-option">
+              <input class="column-check" type="checkbox" value="payrollEndDate">
+              Payroll End
+            </label>
+
+            <label class="column-option">
+              <input class="column-check" type="checkbox" value="hourlyRate">
+              Hourly Rate
+            </label>
+
+            <label class="column-option">
+              <input class="column-check" type="checkbox" value="totalHours" checked>
+              Hours Worked
+            </label>
+
+            <label class="column-option">
+              <input class="column-check" type="checkbox" value="grossPay" checked>
+              Total Earned
+            </label>
+          </div>
+        </div>
+
+        <div class="actions">
+          <label class="select-all">
+            <input id="selectAllHistory" type="checkbox">
+            Select all rows
+          </label>
+
+          <button id="historyExcel" class="btn dark">
+            Export Selected Excel
+          </button>
+
+          <button id="historyPdf" class="btn dark">
+            Export Selected PDF
+          </button>
+        </div>
+
+        <div class="card table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>
+                  <input
+                    id="selectAllHistoryTable"
+                    type="checkbox"
+                    class="row-check"
+                    aria-label="Select all payroll rows"
+                  >
+                </th>
+                <th>Employee</th>
+                <th>Payroll Start</th>
+                <th>Payroll End</th>
+                <th>Rate</th>
+                <th>Hours</th>
+                <th>Amount Earned</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="historyRows"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import {
+      initializeApp
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+
+    import {
+      getDatabase,
+      ref,
+      onValue,
+      push,
+      set,
+      remove
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-database.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDnyxAjuambKegUkyMc-yWHEdMMRgdgsVU",
+      authDomain: "payroll-fd56f.firebaseapp.com",
+      projectId: "payroll-fd56f",
+      storageBucket: "payroll-fd56f.firebasestorage.app",
+      messagingSenderId: "191190737335",
+      appId: "1:191190737335:web:5ad07a94330b47ff024832",
+      measurementId: "G-BNYCJ00ZZL",
+      databaseURL: "https://payroll-fd56f-default-rtdb.firebaseio.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    const DAYS = [
+      "Saturday",
+      "Sunday",
+      "Monday",
+      "Tuesday",
+      "Wednesday",
+      "Thursday",
+      "Friday"
+    ];
+
+    let employees = {};
+    let history = {};
+    let editingEmployeeId = "";
+
+    const $ = id => document.getElementById(id);
+
+    const money = value => new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD"
+    }).format(Number(value || 0));
+
+    function formatLocalDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const day = String(date.getDate()).padStart(2, "0");
+
+      return `${year}-${month}-${day}`;
+    }
+
+    function setCurrentPayrollWeek() {
+      const today = new Date();
+
+      const daysSinceSaturday = (today.getDay() + 1) % 7;
+
+      const start = new Date(today);
+      start.setHours(12, 0, 0, 0);
+      start.setDate(today.getDate() - daysSinceSaturday);
+
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+
+      $("payrollStartDate").value = formatLocalDate(start);
+      $("payrollEndDate").value = formatLocalDate(end);
+    }
+
+    setCurrentPayrollWeek();
+
+    $("payrollStartDate").addEventListener("change", () => {
+      const startValue = $("payrollStartDate").value;
+
+      if (!startValue) {
+        return;
+      }
+
+      const start = new Date(`${startValue}T12:00:00`);
+      const end = new Date(start);
+
+      end.setDate(start.getDate() + 6);
+
+      $("payrollEndDate").value = formatLocalDate(end);
+    });
+
+    $("timeRows").innerHTML = DAYS.map(day => `
+      <tr data-day="${day}">
+        <td><strong>${day}</strong></td>
+        <td><input class="clock-in" type="time"></td>
+        <td><input class="clock-out" type="time"></td>
+        <td><input class="break" type="number" min="0" value="0"></td>
+        <td class="hours">0.00</td>
+      </tr>
+    `).join("");
+
+    function hoursBetween(start, end, breakMinutes = 0) {
+      if (!start || !end) {
+        return 0;
+      }
+
+      const [startHour, startMinute] = start.split(":").map(Number);
+      const [endHour, endMinute] = end.split(":").map(Number);
+
+      let minutes =
+        endHour * 60 +
+        endMinute -
+        (startHour * 60 + startMinute);
+
+      if (minutes < 0) {
+        minutes += 1440;
+      }
+
+      minutes = Math.max(
+        0,
+        minutes - Number(breakMinutes || 0)
+      );
+
+      return minutes / 60;
+    }
+
+    function selectedEmployee() {
+      return employees[$("employeeSelect").value] || null;
+    }
+
+    function calculate() {
+      let total = 0;
+
+      document
+        .querySelectorAll("#timeRows tr")
+        .forEach(row => {
+          const hours = hoursBetween(
+            row.querySelector(".clock-in").value,
+            row.querySelector(".clock-out").value,
+            row.querySelector(".break").value
+          );
+
+          row.querySelector(".hours").textContent =
+            hours.toFixed(2);
+
+          total += hours;
+        });
+
+      $("totalHours").textContent = total.toFixed(2);
+
+      $("grossPay").textContent = money(
+        total * Number(selectedEmployee()?.hourlyRate || 0)
+      );
+
+      return total;
+    }
+
+    document
+      .querySelectorAll("#timeRows input")
+      .forEach(input => {
+        input.addEventListener("input", calculate);
+      });
+
+    $("employeeSelect").addEventListener("change", () => {
+      $("rateDisplay").textContent =
+        money(selectedEmployee()?.hourlyRate);
+
+      calculate();
+    });
+
+    function notice(message) {
+      $("notice").textContent = message;
+      $("notice").classList.remove("hidden");
+
+      setTimeout(() => {
+        $("notice").classList.add("hidden");
+      }, 3500);
+    }
+
+    function showTab(tab) {
+      const titles = {
+        payroll: "Weekly Payroll",
+        employees: "Employee Setup",
+        summary: "Employee Summary",
+        history: "Payroll History"
+      };
+
+      $("pageTitle").textContent = titles[tab];
+
+      ["payroll", "employees", "summary", "history"]
+        .forEach(section => {
+          $(`${section}Section`).classList.toggle(
+            "hidden",
+            section !== tab
+          );
+        });
+
+      document.querySelectorAll("nav button").forEach(button => {
+        button.classList.toggle(
+          "active",
+          button.dataset.tab === tab
+        );
+      });
+    }
+
+    document.querySelectorAll("nav button").forEach(button => {
+      button.addEventListener("click", () => {
+        showTab(button.dataset.tab);
+      });
+    });
+
+    onValue(ref(db, "employees"), snapshot => {
+      employees = snapshot.val() || {};
+      renderEmployees();
+    });
+
+    onValue(ref(db, "payrollHistory"), snapshot => {
+      history = snapshot.val() || {};
+      renderHistory();
+      renderSummary();
+    });
+
+    function resetEmployeeForm() {
+      editingEmployeeId = "";
+
+      $("employeeForm").reset();
+      $("employeeFormTitle").textContent = "Add new employee";
+      $("employeeSubmitButton").textContent = "Add Employee";
+      $("cancelEmployeeEdit").classList.add("hidden");
+    }
+
+    function editEmployee(employeeId) {
+      const employee = employees[employeeId];
+
+      if (!employee) {
+        return;
+      }
+
+      editingEmployeeId = employeeId;
+
+      $("empName").value = employee.name || "";
+      $("empNumber").value = employee.employeeId || "";
+      $("empEmail").value = employee.email || "";
+      $("empPhone").value = employee.phone || "";
+      $("empRate").value = employee.hourlyRate ?? "";
+
+      $("employeeFormTitle").textContent = "Edit employee";
+      $("employeeSubmitButton").textContent = "Save Changes";
+      $("cancelEmployeeEdit").classList.remove("hidden");
+    }
+
+    $("cancelEmployeeEdit").addEventListener(
+      "click",
+      resetEmployeeForm
+    );
+
+    function renderEmployees() {
+      const selectedEmployeeId =
+        $("employeeSelect").value;
+
+      const employeeEntries =
+        Object.entries(employees).sort((a, b) => {
+          return String(a[1].name || "").localeCompare(
+            String(b[1].name || "")
+          );
+        });
+
+      $("employeeSelect").innerHTML =
+        '<option value="">Select employee</option>' +
+        employeeEntries.map(([id, employee]) => `
+          <option value="${id}">
+            ${escapeHtml(employee.name)} —
+            ${money(employee.hourlyRate)}/hr
+          </option>
+        `).join("");
+
+      if (employees[selectedEmployeeId]) {
+        $("employeeSelect").value = selectedEmployeeId;
+      }
+
+      if (!employeeEntries.length) {
+        $("employeeList").innerHTML =
+          '<p class="empty">No employees added yet.</p>';
+
+        return;
+      }
+
+      $("employeeList").innerHTML =
+        employeeEntries.map(([id, employee]) => `
+          <div class="employee-row">
+            <div>
+              <strong>${escapeHtml(employee.name)}</strong>
+              <span>
+                ${escapeHtml(
+                  employee.employeeId || "No employee ID"
+                )}
+                · ${money(employee.hourlyRate)}/hr
+              </span>
+            </div>
+
+            <div class="employee-actions">
+              <button
+                type="button"
+                class="edit"
+                data-edit-employee="${id}"
+              >
+                Edit
+              </button>
+
+              <button
+                type="button"
+                class="danger"
+                data-delete-employee="${id}"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        `).join("");
+
+      document
+        .querySelectorAll("[data-edit-employee]")
+        .forEach(button => {
+          button.addEventListener("click", () => {
+            editEmployee(button.dataset.editEmployee);
+          });
+        });
+
+      document
+        .querySelectorAll("[data-delete-employee]")
+        .forEach(button => {
+          button.addEventListener("click", async () => {
+            const employeeId =
+              button.dataset.deleteEmployee;
+
+            if (!confirm(
+              "Delete this employee? Payroll history will remain."
+            )) {
+              return;
+            }
+
+            if (editingEmployeeId === employeeId) {
+              resetEmployeeForm();
+            }
+
+            await remove(
+              ref(db, `employees/${employeeId}`)
+            );
+          });
+        });
+    }
+
+    $("employeeForm").addEventListener(
+      "submit",
+      async event => {
+        event.preventDefault();
+
+        const name = $("empName").value.trim();
+        const hourlyRate = Number($("empRate").value);
+
+        if (!name) {
+          notice("Enter the employee name.");
+          return;
+        }
+
+        if (
+          !Number.isFinite(hourlyRate) ||
+          hourlyRate < 0
+        ) {
+          notice("Enter a valid hourly rate.");
+          return;
+        }
+
+        const employeeData = {
+          name,
+          employeeId: $("empNumber").value.trim(),
+          email: $("empEmail").value.trim(),
+          phone: $("empPhone").value.trim(),
+          hourlyRate,
+          updatedAt: new Date().toISOString()
+        };
+
+        if (editingEmployeeId) {
+          const currentEmployee =
+            employees[editingEmployeeId] || {};
+
+          employeeData.createdAt =
+            currentEmployee.createdAt ||
+            new Date().toISOString();
+
+          await set(
+            ref(
+              db,
+              `employees/${editingEmployeeId}`
+            ),
+            employeeData
+          );
+
+          notice("Employee updated.");
+        } else {
+          employeeData.createdAt =
+            new Date().toISOString();
+
+          await set(
+            push(ref(db, "employees")),
+            employeeData
+          );
+
+          notice("Employee added.");
+        }
+
+        resetEmployeeForm();
+      }
+    );
+
+    $("savePayroll").addEventListener(
+      "click",
+      async () => {
+        const employee = selectedEmployee();
+        const totalHours = calculate();
+
+        const payrollStartDate =
+          $("payrollStartDate").value;
+
+        const payrollEndDate =
+          $("payrollEndDate").value;
+
+        if (!employee) {
+          notice("Select an employee first.");
+          return;
+        }
+
+        if (!payrollStartDate || !payrollEndDate) {
+          notice("Select both payroll dates.");
+          return;
+        }
+
+        if (payrollStartDate > payrollEndDate) {
+          notice(
+            "Payroll start date cannot be after the end date."
+          );
+          return;
+        }
+
+        if (totalHours <= 0) {
+          notice("Enter at least one work shift.");
+          return;
+        }
+
+        const times = {};
+        const dayHours = {};
+
+        document
+          .querySelectorAll("#timeRows tr")
+          .forEach(row => {
+            const day = row.dataset.day;
+
+            const clockIn =
+              row.querySelector(".clock-in").value;
+
+            const clockOut =
+              row.querySelector(".clock-out").value;
+
+            const breakMinutes = Number(
+              row.querySelector(".break").value || 0
+            );
+
+            times[day] = {
+              in: clockIn,
+              out: clockOut,
+              breakMinutes
+            };
+
+            dayHours[day] = hoursBetween(
+              clockIn,
+              clockOut,
+              breakMinutes
+            );
+          });
+
+        await set(
+          push(ref(db, "payrollHistory")),
+          {
+            employeeId: $("employeeSelect").value,
+            employeeName: employee.name,
+            employeeNumber: employee.employeeId || "",
+            hourlyRate: Number(employee.hourlyRate),
+            payrollStartDate,
+            payrollEndDate,
+            weekEnding: payrollEndDate,
+            times,
+            dayHours,
+            totalHours: Number(totalHours.toFixed(2)),
+            grossPay: Number(
+              (
+                totalHours *
+                Number(employee.hourlyRate)
+              ).toFixed(2)
+            ),
+            createdAt: new Date().toISOString()
+          }
+        );
+
+        document
+          .querySelectorAll("#timeRows input")
+          .forEach(input => {
+            input.value =
+              input.classList.contains("break")
+                ? "0"
+                : "";
+          });
+
+        calculate();
+        notice("Payroll saved.");
+        showTab("history");
+      }
+    );
+
+    function historyArray() {
+      return Object.entries(history)
+        .map(([id, value]) => ({
+          id,
+          ...value
+        }))
+        .sort((a, b) =>
+          String(b.createdAt).localeCompare(
+            String(a.createdAt)
+          )
+        );
+    }
+
+    function renderHistory() {
+      const rows = historyArray();
+
+      $("historyRows").innerHTML = rows.length
+        ? rows.map(row => `
+          <tr>
+            <td>
+              <input
+                type="checkbox"
+                class="row-check history-row-check"
+                value="${row.id}"
+              >
+            </td>
+
+            <td>
+              <strong>${escapeHtml(row.employeeName)}</strong>
+              <small>${escapeHtml(row.employeeNumber || "")}</small>
+            </td>
+
+            <td>${row.payrollStartDate || ""}</td>
+            <td>${row.payrollEndDate || row.weekEnding || ""}</td>
+            <td>${money(row.hourlyRate)}</td>
+            <td>${Number(row.totalHours || 0).toFixed(2)}</td>
+            <td>${money(row.grossPay)}</td>
+
+            <td>
+              <button
+                class="danger"
+                data-delete-payroll="${row.id}"
+              >
+                Delete
+              </button>
+            </td>
+          </tr>
+        `).join("")
+        : `
+          <tr>
+            <td colspan="8" class="empty">
+              No payroll history yet.
+            </td>
+          </tr>
+        `;
+
+      $("selectAllHistory").checked = false;
+      $("selectAllHistoryTable").checked = false;
+
+      document
+        .querySelectorAll("[data-delete-payroll]")
+        .forEach(button => {
+          button.addEventListener("click", async () => {
+            if (!confirm(
+              "Permanently delete this payroll record?"
+            )) {
+              return;
+            }
+
+            await remove(
+              ref(
+                db,
+                `payrollHistory/${button.dataset.deletePayroll}`
+              )
+            );
+          });
+        });
+
+      document
+        .querySelectorAll(".history-row-check")
+        .forEach(checkbox => {
+          checkbox.addEventListener(
+            "change",
+            syncSelectAll
+          );
+        });
+    }
+
+    function setAllHistoryRows(checked) {
+      document
+        .querySelectorAll(".history-row-check")
+        .forEach(checkbox => {
+          checkbox.checked = checked;
+        });
+
+      $("selectAllHistory").checked = checked;
+      $("selectAllHistoryTable").checked = checked;
+    }
+
+    function syncSelectAll() {
+      const checkboxes = [
+        ...document.querySelectorAll(
+          ".history-row-check"
+        )
+      ];
+
+      const allChecked =
+        checkboxes.length > 0 &&
+        checkboxes.every(
+          checkbox => checkbox.checked
+        );
+
+      $("selectAllHistory").checked = allChecked;
+      $("selectAllHistoryTable").checked = allChecked;
+    }
+
+    $("selectAllHistory").addEventListener(
+      "change",
+      event => {
+        setAllHistoryRows(event.target.checked);
+      }
+    );
+
+    $("selectAllHistoryTable").addEventListener(
+      "change",
+      event => {
+        setAllHistoryRows(event.target.checked);
+      }
+    );
+
+    function selectedHistoryRows() {
+      const selectedIds = new Set(
+        [
+          ...document.querySelectorAll(
+            ".history-row-check:checked"
+          )
+        ].map(checkbox => checkbox.value)
+      );
+
+      return historyArray().filter(row =>
+        selectedIds.has(row.id)
+      );
+    }
+
+    function summaryArray() {
+      const summary = {};
+
+      historyArray().forEach(row => {
+        if (!summary[row.employeeId]) {
+          summary[row.employeeId] = {
+            employeeName: row.employeeName,
+            payrollCount: 0,
+            hours: 0,
+            earnings: 0
+          };
+        }
+
+        summary[row.employeeId].payrollCount += 1;
+        summary[row.employeeId].hours +=
+          Number(row.totalHours || 0);
+        summary[row.employeeId].earnings +=
+          Number(row.grossPay || 0);
+      });
+
+      Object.entries(employees).forEach(
+        ([id, employee]) => {
+          if (!summary[id]) {
+            summary[id] = {
+              employeeName: employee.name,
+              payrollCount: 0,
+              hours: 0,
+              earnings: 0
+            };
+          }
+        }
+      );
+
+      return Object.values(summary).sort(
+        (a, b) =>
+          a.employeeName.localeCompare(
+            b.employeeName
+          )
+      );
+    }
+
+    function renderSummary() {
+      const rows = summaryArray();
+
+      $("summaryRows").innerHTML = rows.length
+        ? rows.map(row => `
+          <tr>
+            <td>
+              <strong>${escapeHtml(row.employeeName)}</strong>
+            </td>
+            <td>${row.payrollCount}</td>
+            <td>${row.hours.toFixed(2)}</td>
+            <td>${money(row.earnings)}</td>
+          </tr>
+        `).join("")
+        : `
+          <tr>
+            <td colspan="4" class="empty">
+              No employees or payroll records yet.
+            </td>
+          </tr>
+        `;
+    }
+
+    const COLUMN_DEFINITIONS = {
+      employeeName: {
+        label: "Employee Name",
+        value: row => row.employeeName || ""
+      },
+
+      employeeNumber: {
+        label: "Employee ID",
+        value: row => row.employeeNumber || ""
+      },
+
+      payrollStartDate: {
+        label: "Payroll Start",
+        value: row => row.payrollStartDate || ""
+      },
+
+      payrollEndDate: {
+        label: "Payroll End",
+        value: row =>
+          row.payrollEndDate ||
+          row.weekEnding ||
+          ""
+      },
+
+      hourlyRate: {
+        label: "Hourly Rate",
+        value: row => Number(row.hourlyRate || 0),
+        pdf: row => money(row.hourlyRate)
+      },
+
+      totalHours: {
+        label: "Hours Worked",
+        value: row => Number(row.totalHours || 0),
+        pdf: row =>
+          Number(row.totalHours || 0).toFixed(2)
+      },
+
+      grossPay: {
+        label: "Total Earned",
+        value: row => Number(row.grossPay || 0),
+        pdf: row => money(row.grossPay)
+      }
+    };
+
+    function selectedColumns() {
+      return [
+        ...document.querySelectorAll(
+          ".column-check:checked"
+        )
+      ].map(checkbox => checkbox.value);
+    }
+
+    function exportExcel(rows, filename, columns) {
+      const data = rows.map(row =>
+        Object.fromEntries(
+          columns.map(column => [
+            COLUMN_DEFINITIONS[column].label,
+            COLUMN_DEFINITIONS[column].value(row)
+          ])
+        )
+      );
+
+      const worksheet =
+        XLSX.utils.json_to_sheet(data);
+
+      const workbook =
+        XLSX.utils.book_new();
+
+      XLSX.utils.book_append_sheet(
+        workbook,
+        worksheet,
+        "Payroll"
+      );
+
+      XLSX.writeFile(workbook, filename);
+    }
+
+    function exportPdf(rows, filename, columns) {
+      const { jsPDF } = window.jspdf;
+
+      const document = new jsPDF({
+        orientation:
+          columns.length > 4
+            ? "landscape"
+            : "portrait"
+      });
+
+      document.setFontSize(18);
+      document.text("Payroll Report", 14, 16);
+
+      document.autoTable({
+        startY: 22,
+        head: [
+          columns.map(
+            column =>
+              COLUMN_DEFINITIONS[column].label
+          )
+        ],
+        body: rows.map(row =>
+          columns.map(column => {
+            const definition =
+              COLUMN_DEFINITIONS[column];
+
+            return (
+              definition.pdf ||
+              definition.value
+            )(row);
+          })
+        )
+      });
+
+      document.save(filename);
+    }
+
+    function exportSelected(type) {
+      const rows = selectedHistoryRows();
+      const columns = selectedColumns();
+
+      if (!rows.length) {
+        notice("Select at least one payroll row.");
+        return;
+      }
+
+      if (!columns.length) {
+        notice("Select at least one column to export.");
+        return;
+      }
+
+      if (type === "excel") {
+        exportExcel(
+          rows,
+          "selected-payroll-history.xlsx",
+          columns
+        );
+      } else {
+        exportPdf(
+          rows,
+          "selected-payroll-history.pdf",
+          columns
+        );
+      }
+    }
+
+    $("historyExcel").addEventListener(
+      "click",
+      () => exportSelected("excel")
+    );
+
+    $("historyPdf").addEventListener(
+      "click",
+      () => exportSelected("pdf")
+    );
+
+    $("summaryExcel").addEventListener(
+      "click",
+      () => {
+        const rows = summaryArray().map(row => ({
+          employeeName: row.employeeName,
+          totalHours: row.hours,
+          grossPay: row.earnings
+        }));
+
+        exportExcel(
+          rows,
+          "employee-summary.xlsx",
+          [
+            "employeeName",
+            "totalHours",
+            "grossPay"
+          ]
+        );
+      }
+    );
+
+    $("summaryPdf").addEventListener(
+      "click",
+      () => {
+        const rows = summaryArray().map(row => ({
+          employeeName: row.employeeName,
+          totalHours: row.hours,
+          grossPay: row.earnings
+        }));
+
+        exportPdf(
+          rows,
+          "employee-summary.pdf",
+          [
+            "employeeName",
+            "totalHours",
+            "grossPay"
+          ]
+        );
+      }
+    );
+
+    function escapeHtml(value) {
+      return String(value ?? "").replace(
+        /[&<>'"]/g,
+        character => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          "'": "&#39;",
+          '"': "&quot;"
+        })[character]
+      );
+    }
+  </script>
+</body>
+</html>
