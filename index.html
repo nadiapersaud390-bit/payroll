@@ -235,6 +235,25 @@
       font-weight: 400;
     }
 
+    .payroll-edit-banner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      background: #fffbeb;
+      border: 1px solid #fde68a;
+      color: #92400e;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .payroll-edit-banner button {
+      flex-shrink: 0;
+    }
+
     .table-wrap {
       overflow: auto;
       padding: 0;
@@ -664,6 +683,20 @@
       <div id="notice" class="notice hidden"></div>
 
       <section id="payrollSection">
+        <div id="payrollEditBanner" class="payroll-edit-banner hidden">
+          <span id="payrollEditText">
+            Editing saved payroll
+          </span>
+
+          <button
+            id="cancelPayrollEdit"
+            type="button"
+            class="btn secondary"
+          >
+            Cancel Edit
+          </button>
+        </div>
+
         <div class="card top-grid">
           <label class="employee-picker">
             Employee
@@ -995,6 +1028,7 @@
     let employees = {};
     let history = {};
     let editingEmployeeId = "";
+    let editingPayrollId = "";
     let activeHistoryView = "current";
 
     const $ = id => document.getElementById(id);
@@ -1221,6 +1255,39 @@
         closeEmployeeSearchResults();
       }
     });
+
+    function clearPayrollForm() {
+      $("employeeSelect").value = "";
+      $("employeeSearch").value = "";
+      $("rateDisplay").textContent = money(0);
+
+      document
+        .querySelectorAll("#timeRows input")
+        .forEach(input => {
+          input.value =
+            input.classList.contains("break")
+              ? "0"
+              : "";
+        });
+
+      setCurrentPayrollWeek();
+      calculate();
+    }
+
+    function exitPayrollEditMode() {
+      editingPayrollId = "";
+
+      $("savePayroll").textContent = "Save Payroll";
+      $("payrollEditBanner").classList.add("hidden");
+      $("payrollEditText").textContent = "Editing saved payroll";
+
+      clearPayrollForm();
+    }
+
+    $("cancelPayrollEdit").addEventListener(
+      "click",
+      exitPayrollEditMode
+    );
 
     function selectedEmployee() {
       return employees[$("employeeSelect").value] || null;
@@ -1576,6 +1643,69 @@
       }
     );
 
+    function editPayrollRecord(payrollId) {
+      const record = history[payrollId];
+
+      if (!record) {
+        notice("Payroll record not found.");
+        return;
+      }
+
+      editingPayrollId = payrollId;
+
+      $("employeeSelect").value = record.employeeId || "";
+
+      const employee =
+        employees[record.employeeId] ||
+        {
+          name: record.employeeName,
+          hourlyRate: record.hourlyRate
+        };
+
+      $("employeeSearch").value =
+        employee?.name ||
+        record.employeeName ||
+        "";
+
+      $("rateDisplay").textContent =
+        money(record.hourlyRate || employee?.hourlyRate || 0);
+
+      $("payrollStartDate").value =
+        record.payrollStartDate || "";
+
+      $("payrollEndDate").value =
+        record.payrollEndDate ||
+        record.weekEnding ||
+        "";
+
+      document
+        .querySelectorAll("#timeRows tr")
+        .forEach(row => {
+          const day = row.dataset.day;
+          const time = record.times?.[day] || {};
+
+          row.querySelector(".clock-in").value =
+            time.in || "";
+
+          row.querySelector(".clock-out").value =
+            time.out || "";
+
+          row.querySelector(".break").value =
+            time.breakMinutes ?? 0;
+        });
+
+      calculate();
+
+      $("savePayroll").textContent = "Update Payroll";
+      $("payrollEditText").textContent =
+        `Editing payroll for ${record.employeeName || "employee"}`;
+
+      $("payrollEditBanner").classList.remove("hidden");
+
+      showTab("payroll");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
     $("savePayroll").addEventListener(
       "click",
       async () => {
@@ -1641,28 +1771,52 @@
             );
           });
 
-        await set(
-          push(ref(db, "payrollHistory")),
-          {
-            employeeId: $("employeeSelect").value,
-            employeeName: employee.name,
-            employeeNumber: employee.employeeId || "",
-            hourlyRate: Number(employee.hourlyRate),
-            payrollStartDate,
-            payrollEndDate,
-            weekEnding: payrollEndDate,
-            times,
-            dayHours,
-            totalHours: Number(totalHours.toFixed(2)),
-            grossPay: Number(
-              (
-                totalHours *
-                Number(employee.hourlyRate)
-              ).toFixed(2)
-            ),
-            createdAt: new Date().toISOString()
-          }
-        );
+        const previousRecord =
+          editingPayrollId && history[editingPayrollId]
+            ? history[editingPayrollId]
+            : {};
+
+        const payrollData = {
+          employeeId: $("employeeSelect").value,
+          employeeName: employee.name,
+          employeeNumber: employee.employeeId || "",
+          hourlyRate: Number(employee.hourlyRate),
+          payrollStartDate,
+          payrollEndDate,
+          weekEnding: payrollEndDate,
+          times,
+          dayHours,
+          totalHours: Number(totalHours.toFixed(2)),
+          grossPay: Number(
+            (
+              totalHours *
+              Number(employee.hourlyRate)
+            ).toFixed(2)
+          ),
+          createdAt:
+            previousRecord.createdAt ||
+            new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+
+        if (editingPayrollId) {
+          await set(
+            ref(db, `payrollHistory/${editingPayrollId}`),
+            payrollData
+          );
+
+          notice("Payroll updated.");
+          editingPayrollId = "";
+          $("savePayroll").textContent = "Save Payroll";
+          $("payrollEditBanner").classList.add("hidden");
+        } else {
+          await set(
+            push(ref(db, "payrollHistory")),
+            payrollData
+          );
+
+          notice("Payroll saved.");
+        }
 
         document
           .querySelectorAll("#timeRows input")
@@ -1673,6 +1827,7 @@
                 : "";
           });
 
+        setCurrentPayrollWeek();
         calculate();
 
         const currentPeriod = getCurrentPayrollWeek();
@@ -1683,7 +1838,6 @@
             : "past";
 
         renderHistory();
-        notice("Payroll saved.");
         showTab("history");
       }
     );
@@ -1796,12 +1950,23 @@
             <td>${money(row.grossPay)}</td>
 
             <td>
-              <button
-                class="danger"
-                data-delete-payroll="${row.id}"
-              >
-                Delete
-              </button>
+              <div class="employee-actions">
+                <button
+                  type="button"
+                  class="edit"
+                  data-edit-payroll="${row.id}"
+                >
+                  Edit
+                </button>
+
+                <button
+                  type="button"
+                  class="danger"
+                  data-delete-payroll="${row.id}"
+                >
+                  Delete
+                </button>
+              </div>
             </td>
           </tr>
         `).join("")
@@ -1821,6 +1986,16 @@
       $("selectAllHistoryTable").checked = false;
 
       document
+        .querySelectorAll("[data-edit-payroll]")
+        .forEach(button => {
+          button.addEventListener("click", () => {
+            editPayrollRecord(
+              button.dataset.editPayroll
+            );
+          });
+        });
+
+      document
         .querySelectorAll("[data-delete-payroll]")
         .forEach(button => {
           button.addEventListener("click", async () => {
@@ -1830,12 +2005,19 @@
               return;
             }
 
+            const payrollId =
+              button.dataset.deletePayroll;
+
             await remove(
               ref(
                 db,
-                `payrollHistory/${button.dataset.deletePayroll}`
+                `payrollHistory/${payrollId}`
               )
             );
+
+            if (editingPayrollId === payrollId) {
+              exitPayrollEditMode();
+            }
           });
         });
 
