@@ -139,6 +139,80 @@
       border-color: #fca311;
     }
 
+    .employee-picker {
+      position: relative;
+    }
+
+    .employee-picker input {
+      padding-right: 38px;
+    }
+
+    .employee-picker::after {
+      content: "⌄";
+      position: absolute;
+      right: 13px;
+      bottom: 12px;
+      color: #64748b;
+      pointer-events: none;
+      font-size: 18px;
+    }
+
+    .employee-search-results {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      z-index: 30;
+      max-height: 280px;
+      overflow-y: auto;
+      background: white;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      box-shadow: 0 14px 30px rgba(15, 23, 42, 0.16);
+    }
+
+    .employee-search-option {
+      width: 100%;
+      border: 0;
+      border-bottom: 1px solid #edf1f6;
+      background: white;
+      padding: 11px 12px;
+      text-align: left;
+      cursor: pointer;
+      color: #14213d;
+    }
+
+    .employee-search-option:last-child {
+      border-bottom: 0;
+    }
+
+    .employee-search-option:hover,
+    .employee-search-option.active {
+      background: #f8fafc;
+    }
+
+    .employee-search-option strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .employee-search-option span {
+      display: block;
+      margin-top: 3px;
+      color: #64748b;
+      font-size: 12px;
+    }
+
+    .employee-search-empty {
+      padding: 12px;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    .hidden-select {
+      display: none;
+    }
+
     .metric {
       display: grid;
       gap: 4px;
@@ -260,6 +334,73 @@
       display: flex;
       flex-direction: column;
       gap: 14px;
+    }
+
+    .employee-list-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
+    .employee-list-header .section-title {
+      margin: 0;
+    }
+
+    .employee-count {
+      background: #e2e8f0;
+      color: #334155;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .location-summary {
+      border-top: 1px solid #edf1f6;
+      border-bottom: 1px solid #edf1f6;
+      margin: 6px 0 10px;
+      padding: 12px 0;
+    }
+
+    .location-summary-title {
+      margin: 0 0 9px;
+      color: #475569;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .location-counts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .location-count-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 999px;
+      padding: 7px 10px;
+      color: #334155;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .location-count-number {
+      display: inline-grid;
+      place-items: center;
+      min-width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      background: #14213d;
+      color: white;
+      padding: 0 6px;
+      font-size: 11px;
     }
 
     .employee-list-card {
@@ -524,11 +665,23 @@
 
       <section id="payrollSection">
         <div class="card top-grid">
-          <label>
+          <label class="employee-picker">
             Employee
-            <select id="employeeSelect">
+            <input
+              id="employeeSearch"
+              type="text"
+              placeholder="Type employee name, ID, or location"
+              autocomplete="off"
+            >
+
+            <select id="employeeSelect" class="hidden-select">
               <option value="">Select employee</option>
             </select>
+
+            <div
+              id="employeeSearchResults"
+              class="employee-search-results hidden"
+            ></div>
           </label>
 
           <label>
@@ -610,6 +763,14 @@
               </label>
 
               <label>
+                Location (optional)
+                <input
+                  id="empLocation"
+                  placeholder="Office, branch, city, or job site"
+                >
+              </label>
+
+              <label>
                 Hourly rate
                 <input
                   id="empRate"
@@ -641,7 +802,22 @@
           </div>
 
           <div class="card employee-list-card">
-            <h2 class="section-title">All employees</h2>
+            <div class="employee-list-header">
+              <h2 class="section-title">All employees</h2>
+              <span id="employeeCount" class="employee-count">
+                0 employees
+              </span>
+            </div>
+
+            <div class="location-summary">
+              <p class="location-summary-title">Employees by location</p>
+              <div id="locationCounts" class="location-counts">
+                <span class="location-count-item">
+                  No employees yet
+                </span>
+              </div>
+            </div>
+
             <div id="employeeList" class="employee-list-scroll"></div>
           </div>
         </div>
@@ -911,6 +1087,141 @@
       return minutes / 60;
     }
 
+    function employeeSearchText(employee) {
+      return [
+        employee.name || "",
+        employee.employeeId || "",
+        employee.location || ""
+      ].join(" ").toLowerCase();
+    }
+
+    function closeEmployeeSearchResults() {
+      $("employeeSearchResults").classList.add("hidden");
+    }
+
+    function selectEmployeeFromSearch(employeeId) {
+      const employee = employees[employeeId];
+
+      if (!employee) {
+        return;
+      }
+
+      $("employeeSelect").value = employeeId;
+      $("employeeSearch").value = employee.name || "";
+      closeEmployeeSearchResults();
+
+      $("rateDisplay").textContent =
+        money(employee.hourlyRate);
+
+      calculate();
+    }
+
+    function renderEmployeeSearchResults(query = "") {
+      const normalizedQuery = query.trim().toLowerCase();
+
+      const matches = Object.entries(employees)
+        .filter(([, employee]) => {
+          return !normalizedQuery ||
+            employeeSearchText(employee).includes(
+              normalizedQuery
+            );
+        })
+        .sort((a, b) =>
+          String(a[1].name || "").localeCompare(
+            String(b[1].name || "")
+          )
+        )
+        .slice(0, 20);
+
+      $("employeeSearchResults").innerHTML = matches.length
+        ? matches.map(([id, employee]) => `
+          <button
+            type="button"
+            class="employee-search-option"
+            data-search-employee="${id}"
+          >
+            <strong>${escapeHtml(employee.name)}</strong>
+            <span>
+              ${
+                employee.employeeId
+                  ? `ID: ${escapeHtml(employee.employeeId)}`
+                  : "No employee ID"
+              }
+              · ${money(employee.hourlyRate)}/hr
+              ${
+                employee.location
+                  ? ` · ${escapeHtml(employee.location)}`
+                  : ""
+              }
+            </span>
+          </button>
+        `).join("")
+        : `
+          <div class="employee-search-empty">
+            No matching employees found.
+          </div>
+        `;
+
+      $("employeeSearchResults").classList.remove("hidden");
+
+      document
+        .querySelectorAll("[data-search-employee]")
+        .forEach(button => {
+          button.addEventListener("click", () => {
+            selectEmployeeFromSearch(
+              button.dataset.searchEmployee
+            );
+          });
+        });
+    }
+
+    $("employeeSearch").addEventListener("focus", () => {
+      renderEmployeeSearchResults(
+        $("employeeSearch").value
+      );
+    });
+
+    $("employeeSearch").addEventListener("input", () => {
+      $("employeeSelect").value = "";
+      $("rateDisplay").textContent = money(0);
+      calculate();
+
+      renderEmployeeSearchResults(
+        $("employeeSearch").value
+      );
+    });
+
+    $("employeeSearch").addEventListener(
+      "keydown",
+      event => {
+        if (event.key === "Escape") {
+          closeEmployeeSearchResults();
+          return;
+        }
+
+        if (event.key === "Enter") {
+          const firstResult =
+            document.querySelector(
+              "[data-search-employee]"
+            );
+
+          if (firstResult) {
+            event.preventDefault();
+
+            selectEmployeeFromSearch(
+              firstResult.dataset.searchEmployee
+            );
+          }
+        }
+      }
+    );
+
+    document.addEventListener("click", event => {
+      if (!event.target.closest(".employee-picker")) {
+        closeEmployeeSearchResults();
+      }
+    });
+
     function selectedEmployee() {
       return employees[$("employeeSelect").value] || null;
     }
@@ -949,8 +1260,13 @@
       });
 
     $("employeeSelect").addEventListener("change", () => {
+      const employee = selectedEmployee();
+
+      $("employeeSearch").value =
+        employee?.name || "";
+
       $("rateDisplay").textContent =
-        money(selectedEmployee()?.hourlyRate);
+        money(employee?.hourlyRate);
 
       calculate();
     });
@@ -1029,6 +1345,7 @@
       $("empNumber").value = employee.employeeId || "";
       $("empEmail").value = employee.email || "";
       $("empPhone").value = employee.phone || "";
+      $("empLocation").value = employee.location || "";
       $("empRate").value = employee.hourlyRate ?? "";
 
       $("employeeFormTitle").textContent = "Edit employee";
@@ -1041,6 +1358,42 @@
       resetEmployeeForm
     );
 
+    function renderLocationCounts(employeeEntries) {
+      const counts = {};
+
+      employeeEntries.forEach(([, employee]) => {
+        const location =
+          String(employee.location || "").trim() ||
+          "Unassigned";
+
+        counts[location] = (counts[location] || 0) + 1;
+      });
+
+      const locations = Object.entries(counts).sort(
+        (a, b) => {
+          if (a[0] === "Unassigned") return 1;
+          if (b[0] === "Unassigned") return -1;
+
+          return a[0].localeCompare(b[0]);
+        }
+      );
+
+      $("locationCounts").innerHTML = locations.length
+        ? locations.map(([location, count]) => `
+          <span class="location-count-item">
+            ${escapeHtml(location)}
+            <span class="location-count-number">
+              ${count}
+            </span>
+          </span>
+        `).join("")
+        : `
+          <span class="location-count-item">
+            No employees yet
+          </span>
+        `;
+    }
+
     function renderEmployees() {
       const selectedEmployeeId =
         $("employeeSelect").value;
@@ -1051,6 +1404,15 @@
             String(b[1].name || "")
           );
         });
+
+      $("employeeCount").textContent =
+        `${employeeEntries.length} ${
+          employeeEntries.length === 1
+            ? "employee"
+            : "employees"
+        }`;
+
+      renderLocationCounts(employeeEntries);
 
       $("employeeSelect").innerHTML =
         '<option value="">Select employee</option>' +
@@ -1063,6 +1425,14 @@
 
       if (employees[selectedEmployeeId]) {
         $("employeeSelect").value = selectedEmployeeId;
+        $("employeeSearch").value =
+          employees[selectedEmployeeId].name || "";
+      } else if (
+        $("employeeSelect").value &&
+        !employees[$("employeeSelect").value]
+      ) {
+        $("employeeSelect").value = "";
+        $("employeeSearch").value = "";
       }
 
       if (!employeeEntries.length) {
@@ -1082,6 +1452,11 @@
                   employee.employeeId || "No employee ID"
                 )}
                 · ${money(employee.hourlyRate)}/hr
+                ${
+                  employee.location
+                    ? ` · ${escapeHtml(employee.location)}`
+                    : ""
+                }
               </span>
             </div>
 
@@ -1163,6 +1538,7 @@
           employeeId: $("empNumber").value.trim(),
           email: $("empEmail").value.trim(),
           phone: $("empPhone").value.trim(),
+          location: $("empLocation").value.trim(),
           hourlyRate,
           updatedAt: new Date().toISOString()
         };
