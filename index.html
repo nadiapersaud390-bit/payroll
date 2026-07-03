@@ -340,6 +340,50 @@
       cursor: pointer;
     }
 
+    .history-tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .history-tab {
+      border: 1px solid #cbd5e1;
+      background: white;
+      color: #475569;
+      border-radius: 10px;
+      padding: 10px 15px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .history-tab.active {
+      background: #14213d;
+      border-color: #14213d;
+      color: white;
+    }
+
+    .history-heading {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .history-heading h2 {
+      margin: 0;
+    }
+
+    .history-count {
+      background: #e2e8f0;
+      color: #334155;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
     .export-options {
       margin-bottom: 14px;
       padding: 16px 18px;
@@ -625,6 +669,31 @@
       </section>
 
       <section id="historySection" class="hidden">
+        <div class="history-tabs">
+          <button
+            id="currentHistoryTab"
+            class="history-tab active"
+            type="button"
+          >
+            Current Payroll
+          </button>
+
+          <button
+            id="pastHistoryTab"
+            class="history-tab"
+            type="button"
+          >
+            Past Payrolls
+          </button>
+        </div>
+
+        <div class="history-heading">
+          <h2 id="historyViewTitle">Current Payroll</h2>
+          <span id="historyRecordCount" class="history-count">
+            0 records
+          </span>
+        </div>
+
         <div class="card export-options">
           <h3>Choose columns to export</h3>
 
@@ -669,7 +738,7 @@
         <div class="actions">
           <label class="select-all">
             <input id="selectAllHistory" type="checkbox">
-            Select all rows
+            Select all visible rows
           </label>
 
           <button id="historyExcel" class="btn dark">
@@ -690,7 +759,7 @@
                     id="selectAllHistoryTable"
                     type="checkbox"
                     class="row-check"
-                    aria-label="Select all payroll rows"
+                    aria-label="Select all visible payroll rows"
                   >
                 </th>
                 <th>Employee</th>
@@ -750,6 +819,7 @@
     let employees = {};
     let history = {};
     let editingEmployeeId = "";
+    let activeHistoryView = "current";
 
     const $ = id => document.getElementById(id);
 
@@ -766,9 +836,8 @@
       return `${year}-${month}-${day}`;
     }
 
-    function setCurrentPayrollWeek() {
+    function getCurrentPayrollWeek() {
       const today = new Date();
-
       const daysSinceSaturday = (today.getDay() + 1) % 7;
 
       const start = new Date(today);
@@ -778,8 +847,16 @@
       const end = new Date(start);
       end.setDate(start.getDate() + 6);
 
-      $("payrollStartDate").value = formatLocalDate(start);
-      $("payrollEndDate").value = formatLocalDate(end);
+      return {
+        start: formatLocalDate(start),
+        end: formatLocalDate(end)
+      };
+    }
+
+    function setCurrentPayrollWeek() {
+      const period = getCurrentPayrollWeek();
+      $("payrollStartDate").value = period.start;
+      $("payrollEndDate").value = period.end;
     }
 
     setCurrentPayrollWeek();
@@ -1221,6 +1298,15 @@
           });
 
         calculate();
+
+        const currentPeriod = getCurrentPayrollWeek();
+        activeHistoryView =
+          payrollStartDate === currentPeriod.start &&
+          payrollEndDate === currentPeriod.end
+            ? "current"
+            : "past";
+
+        renderHistory();
         notice("Payroll saved.");
         showTab("history");
       }
@@ -1239,8 +1325,77 @@
         );
     }
 
+    function visibleHistoryRows() {
+      const currentPeriod = getCurrentPayrollWeek();
+
+      return historyArray().filter(row => {
+        const rowStart = row.payrollStartDate || "";
+        const rowEnd =
+          row.payrollEndDate ||
+          row.weekEnding ||
+          "";
+
+        const isCurrent =
+          rowStart === currentPeriod.start &&
+          rowEnd === currentPeriod.end;
+
+        return activeHistoryView === "current"
+          ? isCurrent
+          : !isCurrent;
+      });
+    }
+
+    function setHistoryView(view) {
+      activeHistoryView = view;
+
+      $("currentHistoryTab").classList.toggle(
+        "active",
+        view === "current"
+      );
+
+      $("pastHistoryTab").classList.toggle(
+        "active",
+        view === "past"
+      );
+
+      $("historyViewTitle").textContent =
+        view === "current"
+          ? "Current Payroll"
+          : "Past Payrolls";
+
+      renderHistory();
+    }
+
+    $("currentHistoryTab").addEventListener(
+      "click",
+      () => setHistoryView("current")
+    );
+
+    $("pastHistoryTab").addEventListener(
+      "click",
+      () => setHistoryView("past")
+    );
+
     function renderHistory() {
-      const rows = historyArray();
+      const rows = visibleHistoryRows();
+
+      $("currentHistoryTab").classList.toggle(
+        "active",
+        activeHistoryView === "current"
+      );
+
+      $("pastHistoryTab").classList.toggle(
+        "active",
+        activeHistoryView === "past"
+      );
+
+      $("historyViewTitle").textContent =
+        activeHistoryView === "current"
+          ? "Current Payroll"
+          : "Past Payrolls";
+
+      $("historyRecordCount").textContent =
+        `${rows.length} ${rows.length === 1 ? "record" : "records"}`;
 
       $("historyRows").innerHTML = rows.length
         ? rows.map(row => `
@@ -1277,7 +1432,11 @@
         : `
           <tr>
             <td colspan="8" class="empty">
-              No payroll history yet.
+              ${
+                activeHistoryView === "current"
+                  ? "No payroll has been saved for the current Saturday-to-Friday period."
+                  : "No past payroll records are stored yet."
+              }
             </td>
           </tr>
         `;
@@ -1365,7 +1524,7 @@
         ].map(checkbox => checkbox.value)
       );
 
-      return historyArray().filter(row =>
+      return visibleHistoryRows().filter(row =>
         selectedIds.has(row.id)
       );
     }
