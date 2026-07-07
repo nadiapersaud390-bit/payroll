@@ -487,6 +487,75 @@
       flex-shrink: 0;
     }
 
+    .archive-btn {
+      background: #f8fafc;
+      color: #64748b;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 7px 10px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .restore-btn {
+      background: #f0fdf4;
+      color: #15803d;
+      border: 1px solid #bbf7d0;
+      border-radius: 8px;
+      padding: 7px 10px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .inactive-badge {
+      display: inline-block;
+      background: #f1f5f9;
+      color: #94a3b8;
+      border-radius: 999px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      vertical-align: middle;
+      margin-left: 6px;
+    }
+
+    .employee-row.inactive {
+      opacity: 0.55;
+    }
+
+    .emp-notes {
+      font-size: 12px;
+      color: #94a3b8;
+      font-style: italic;
+      margin-top: 1px;
+      overflow-wrap: anywhere;
+    }
+
+    .list-filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .filter-toggle {
+      background: none;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #64748b;
+      cursor: pointer;
+    }
+
+    .filter-toggle.on {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+
     .form-actions {
       display: flex;
       gap: 10px;
@@ -844,6 +913,16 @@
                 >
               </label>
 
+              <label>
+                Notes (optional)
+                <textarea
+                  id="empNotes"
+                  rows="2"
+                  placeholder="e.g. on probation, part-time only"
+                  style="resize:vertical;font-family:inherit;font-size:14px;"
+                ></textarea>
+              </label>
+
               <div class="form-actions">
                 <button
                   id="employeeSubmitButton"
@@ -867,9 +946,18 @@
           <div class="card employee-list-card">
             <div class="employee-list-header">
               <h2 class="section-title">All employees</h2>
-              <span id="employeeCount" class="employee-count">
-                0 employees
-              </span>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <button
+                  id="toggleInactiveBtn"
+                  class="filter-toggle"
+                  type="button"
+                >
+                  Show archived
+                </button>
+                <span id="employeeCount" class="employee-count">
+                  0 employees
+                </span>
+              </div>
             </div>
 
             <div class="location-summary">
@@ -1071,6 +1159,7 @@
     let history = {};
     let editingEmployeeId = "";
     let editingPayrollId = "";
+    let showInactive = false;
     let activeHistoryView = "current";
 
     const $ = id => document.getElementById(id);
@@ -1212,11 +1301,28 @@
       return `${hour}:${String(minute).padStart(2, "0")}`;
     }
 
+    function roundTimeTo15(timeStr) {
+      // timeStr is already in "H:MM" format from cleanTimeEntry
+      let [hour, minute] = timeStr.split(":").map(Number);
+      const rounded = Math.ceil(minute / 15) * 15;
+
+      if (rounded === 60) {
+        minute = 0;
+        hour = hour === 12 ? 1 : hour + 1;
+        // clamp to valid 12-hour range
+        if (hour > 12) hour = 1;
+      } else {
+        minute = rounded;
+      }
+
+      return `${hour}:${String(minute).padStart(2, "0")}`;
+    }
+
     function normalizeVisibleTimeInput(input) {
       const cleaned = cleanTimeEntry(input.value);
 
       if (cleaned) {
-        input.value = cleaned;
+        input.value = roundTimeTo15(cleaned);
       }
     }
 
@@ -1344,6 +1450,7 @@
 
       const matches = Object.entries(employees)
         .filter(([, employee]) => {
+          if (employee.active === false) return false;
           return !normalizedQuery ||
             employeeSearchText(employee).includes(
               normalizedQuery
@@ -1640,6 +1747,7 @@
       $("empPhone").value = employee.phone || "";
       $("empLocation").value = employee.location || "";
       $("empRate").value = employee.hourlyRate ?? "";
+      $("empNotes").value = employee.notes || "";
 
       $("employeeFormTitle").textContent = "Edit employee";
       $("employeeSubmitButton").textContent = "Save Changes";
@@ -1649,6 +1757,14 @@
     $("cancelEmployeeEdit").addEventListener(
       "click",
       resetEmployeeForm
+    );
+
+    $("toggleInactiveBtn").addEventListener(
+      "click",
+      () => {
+        showInactive = !showInactive;
+        renderEmployees();
+      }
     );
 
     function renderLocationCounts(employeeEntries) {
@@ -1691,55 +1807,87 @@
       const selectedEmployeeId =
         $("employeeSelect").value;
 
-      const employeeEntries =
+      const allEntries =
         Object.entries(employees).sort((a, b) => {
+          // Active first, then alphabetical
+          const aActive = a[1].active !== false;
+          const bActive = b[1].active !== false;
+          if (aActive !== bActive) return aActive ? -1 : 1;
           return String(a[1].name || "").localeCompare(
             String(b[1].name || "")
           );
         });
 
+      const activeEntries =
+        allEntries.filter(([, e]) => e.active !== false);
+
+      const visibleEntries = showInactive
+        ? allEntries
+        : activeEntries;
+
+      const archivedCount =
+        allEntries.length - activeEntries.length;
+
       $("employeeCount").textContent =
-        `${employeeEntries.length} ${
-          employeeEntries.length === 1
+        `${activeEntries.length} ${
+          activeEntries.length === 1
             ? "employee"
             : "employees"
-        }`;
+        }${archivedCount ? ` · ${archivedCount} archived` : ""}`;
 
-      renderLocationCounts(employeeEntries);
+      // Update filter button label
+      const toggleBtn = $("toggleInactiveBtn");
+      if (toggleBtn) {
+        toggleBtn.textContent = showInactive
+          ? "Hide archived"
+          : `Show archived${archivedCount ? ` (${archivedCount})` : ""}`;
+        toggleBtn.classList.toggle("on", showInactive);
+      }
 
+      renderLocationCounts(activeEntries);
+
+      // Dropdown only shows active employees
       $("employeeSelect").innerHTML =
         '<option value="">Select employee</option>' +
-        employeeEntries.map(([id, employee]) => `
+        activeEntries.map(([id, employee]) => `
           <option value="${id}">
             ${escapeHtml(employee.name)} —
             ${money(employee.hourlyRate)}/hr
           </option>
         `).join("");
 
-      if (employees[selectedEmployeeId]) {
+      const selectedIsActive =
+        employees[selectedEmployeeId] &&
+        employees[selectedEmployeeId].active !== false;
+
+      if (selectedIsActive) {
         $("employeeSelect").value = selectedEmployeeId;
         $("employeeSearch").value =
           employees[selectedEmployeeId].name || "";
-      } else if (
-        $("employeeSelect").value &&
-        !employees[$("employeeSelect").value]
-      ) {
+      } else {
+        // Selected employee was archived or deleted — clear picker
         $("employeeSelect").value = "";
         $("employeeSearch").value = "";
+        $("rateDisplay").textContent = money(0);
+        calculate();
       }
 
-      if (!employeeEntries.length) {
+      if (!visibleEntries.length) {
         $("employeeList").innerHTML =
           '<p class="empty">No employees added yet.</p>';
-
         return;
       }
 
       $("employeeList").innerHTML =
-        employeeEntries.map(([id, employee]) => `
-          <div class="employee-row">
+        visibleEntries.map(([id, employee]) => {
+          const isActive = employee.active !== false;
+          return `
+          <div class="employee-row${isActive ? "" : " inactive"}">
             <div>
-              <strong>${escapeHtml(employee.name)}</strong>
+              <strong>
+                ${escapeHtml(employee.name)}
+                ${isActive ? "" : '<span class="inactive-badge">Archived</span>'}
+              </strong>
               <span>
                 ${escapeHtml(
                   employee.employeeId || "No employee ID"
@@ -1751,6 +1899,11 @@
                     : ""
                 }
               </span>
+              ${
+                employee.notes
+                  ? `<span class="emp-notes">${escapeHtml(employee.notes)}</span>`
+                  : ""
+              }
             </div>
 
             <div class="employee-actions">
@@ -1764,6 +1917,15 @@
 
               <button
                 type="button"
+                class="${isActive ? "archive-btn" : "restore-btn"}"
+                data-toggle-employee="${id}"
+                data-active="${isActive}"
+              >
+                ${isActive ? "Archive" : "Restore"}
+              </button>
+
+              <button
+                type="button"
                 class="danger"
                 data-delete-employee="${id}"
               >
@@ -1771,13 +1933,32 @@
               </button>
             </div>
           </div>
-        `).join("");
+        `;
+        }).join("");
 
       document
         .querySelectorAll("[data-edit-employee]")
         .forEach(button => {
           button.addEventListener("click", () => {
             editEmployee(button.dataset.editEmployee);
+          });
+        });
+
+      document
+        .querySelectorAll("[data-toggle-employee]")
+        .forEach(button => {
+          button.addEventListener("click", async () => {
+            const employeeId = button.dataset.toggleEmployee;
+            const isCurrentlyActive =
+              button.dataset.active === "true";
+            const employee = employees[employeeId];
+
+            if (!employee) return;
+
+            await set(
+              ref(db, `employees/${employeeId}`),
+              { ...employee, active: !isCurrentlyActive, updatedAt: new Date().toISOString() }
+            );
           });
         });
 
@@ -1833,6 +2014,10 @@
           phone: $("empPhone").value.trim(),
           location: $("empLocation").value.trim(),
           hourlyRate,
+          notes: $("empNotes").value.trim(),
+          active: editingEmployeeId
+            ? (employees[editingEmployeeId]?.active !== false)
+            : true,
           updatedAt: new Date().toISOString()
         };
 
