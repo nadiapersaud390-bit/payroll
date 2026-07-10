@@ -452,6 +452,36 @@
       overflow: hidden;
     }
 
+    .history-filters {
+      display: flex;
+      align-items: flex-end;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .history-filters label {
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+      color: #64748b;
+      flex: 1 1 160px;
+      min-width: 140px;
+    }
+
+    .history-filters input {
+      padding: 10px 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    .csv-import-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
     .employee-list-scroll {
       flex: 1;
       min-height: 0;
@@ -750,6 +780,57 @@
       .employee-list-scroll {
         max-height: 420px;
       }
+
+      .history-filters {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .history-filters label,
+      .history-filters button {
+        width: 100%;
+        flex: 1 1 auto;
+      }
+
+      .employee-list-header {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .employee-list-header > div {
+        flex-wrap: wrap;
+      }
+
+      table {
+        min-width: 640px;
+      }
+
+      th,
+      td {
+        padding: 10px 10px;
+        font-size: 13px;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .employee-row {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .employee-actions {
+        width: 100%;
+        justify-content: flex-start;
+      }
+
+      .totals {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .totals button {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -946,7 +1027,20 @@
           <div class="card employee-list-card">
             <div class="employee-list-header">
               <h2 class="section-title">All employees</h2>
-              <div style="display:flex;align-items:center;gap:8px;">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                <button
+                  id="csvImportBtn"
+                  class="filter-toggle csv-import-btn"
+                  type="button"
+                >
+                  Import CSV
+                </button>
+                <input
+                  id="csvImportInput"
+                  type="file"
+                  accept=".csv,text/csv"
+                  class="hidden"
+                >
                 <button
                   id="toggleInactiveBtn"
                   class="filter-toggle"
@@ -1025,6 +1119,36 @@
           <span id="historyRecordCount" class="history-count">
             0 records
           </span>
+        </div>
+
+        <div class="card history-filters">
+          <label>
+            Search employee
+            <input
+              id="historySearch"
+              type="text"
+              placeholder="Name or employee ID"
+              autocomplete="off"
+            >
+          </label>
+
+          <label>
+            From date
+            <input id="historyFilterStart" type="date">
+          </label>
+
+          <label>
+            To date
+            <input id="historyFilterEnd" type="date">
+          </label>
+
+          <button
+            id="historyFilterClear"
+            class="btn secondary"
+            type="button"
+          >
+            Clear filters
+          </button>
         </div>
 
         <div class="card export-options">
@@ -2054,6 +2178,117 @@
       }
     );
 
+    function parseCsv(text) {
+      const lines = text
+        .split(/\r?\n/)
+        .filter(line => line.trim().length);
+
+      if (!lines.length) return [];
+
+      const splitLine = line => {
+        const cells = [];
+        let current = "";
+        let inQuotes = false;
+
+        for (let i = 0; i < line.length; i++) {
+          const char = line[i];
+
+          if (inQuotes) {
+            if (char === '"' && line[i + 1] === '"') {
+              current += '"';
+              i++;
+            } else if (char === '"') {
+              inQuotes = false;
+            } else {
+              current += char;
+            }
+          } else if (char === '"') {
+            inQuotes = true;
+          } else if (char === ",") {
+            cells.push(current);
+            current = "";
+          } else {
+            current += char;
+          }
+        }
+
+        cells.push(current);
+        return cells.map(cell => cell.trim());
+      };
+
+      const headers = splitLine(lines[0])
+        .map(header => header.toLowerCase());
+
+      return lines.slice(1).map(line => {
+        const cells = splitLine(line);
+        const row = {};
+
+        headers.forEach((header, index) => {
+          row[header] = cells[index] || "";
+        });
+
+        return row;
+      });
+    }
+
+    $("csvImportBtn").addEventListener("click", () => {
+      $("csvImportInput").click();
+    });
+
+    $("csvImportInput").addEventListener(
+      "change",
+      async event => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const text = await file.text();
+        const rows = parseCsv(text);
+
+        if (!rows.length) {
+          notice("The CSV file has no employee rows.");
+          event.target.value = "";
+          return;
+        }
+
+        let imported = 0;
+        let skipped = 0;
+
+        for (const row of rows) {
+          const name = (row.name || row["full name"] || "").trim();
+          const rateRaw = row.hourlyrate || row["hourly rate"] || row.rate || "";
+          const hourlyRate = Number(rateRaw);
+
+          if (!name || !Number.isFinite(hourlyRate) || hourlyRate < 0) {
+            skipped++;
+            continue;
+          }
+
+          const employeeData = {
+            name,
+            employeeId: (row.employeeid || row["employee id"] || "").trim(),
+            email: (row.email || "").trim(),
+            phone: (row.phone || "").trim(),
+            location: (row.location || "").trim(),
+            hourlyRate,
+            notes: (row.notes || "").trim(),
+            active: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+
+          await set(push(ref(db, "employees")), employeeData);
+          imported++;
+        }
+
+        notice(
+          `Imported ${imported} employee${imported === 1 ? "" : "s"}.` +
+          (skipped ? ` Skipped ${skipped} row${skipped === 1 ? "" : "s"} missing a name or valid hourly rate.` : "")
+        );
+
+        event.target.value = "";
+      }
+    );
+
     function editPayrollRecord(payrollId) {
       const record = history[payrollId];
 
@@ -2297,6 +2532,13 @@
     function visibleHistoryRows() {
       const currentPeriod = getCurrentPayrollWeek();
 
+      const searchTerm = (
+        $("historySearch")?.value || ""
+      ).trim().toLowerCase();
+
+      const filterStart = $("historyFilterStart")?.value || "";
+      const filterEnd = $("historyFilterEnd")?.value || "";
+
       return historyArray().filter(row => {
         const rowStart = row.payrollStartDate || "";
         const rowEnd =
@@ -2308,9 +2550,28 @@
           rowStart === currentPeriod.start &&
           rowEnd === currentPeriod.end;
 
-        return activeHistoryView === "current"
+        const matchesView = activeHistoryView === "current"
           ? isCurrent
           : !isCurrent;
+
+        if (!matchesView) return false;
+
+        if (searchTerm) {
+          const haystack = `${row.employeeName || ""} ${row.employeeNumber || ""}`
+            .toLowerCase();
+
+          if (!haystack.includes(searchTerm)) return false;
+        }
+
+        if (filterStart && rowEnd && rowEnd < filterStart) {
+          return false;
+        }
+
+        if (filterEnd && rowStart && rowStart > filterEnd) {
+          return false;
+        }
+
+        return true;
       });
     }
 
@@ -2343,6 +2604,31 @@
     $("pastHistoryTab").addEventListener(
       "click",
       () => setHistoryView("past")
+    );
+
+    $("historySearch").addEventListener(
+      "input",
+      renderHistory
+    );
+
+    $("historyFilterStart").addEventListener(
+      "change",
+      renderHistory
+    );
+
+    $("historyFilterEnd").addEventListener(
+      "change",
+      renderHistory
+    );
+
+    $("historyFilterClear").addEventListener(
+      "click",
+      () => {
+        $("historySearch").value = "";
+        $("historyFilterStart").value = "";
+        $("historyFilterEnd").value = "";
+        renderHistory();
+      }
     );
 
     function renderHistory() {
