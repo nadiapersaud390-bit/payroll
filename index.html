@@ -973,6 +973,31 @@
       display: block;
     }
 
+    /* Day Pay uses the main pay-mode selector; no per-day toggles. */
+    .day-pay-column,
+    .day-pay-cell {
+      display: none;
+    }
+
+    table.daypay-mode .day-pay-column,
+    table.daypay-mode .day-pay-cell {
+      display: table-cell;
+    }
+
+    tr.is-day-pay .clock-in-cell .time-field,
+    tr.is-day-pay .clock-out-cell .time-field {
+      display: grid;
+    }
+
+    tr.is-day-pay .break-cell {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    tr.is-day-pay .hours-display {
+      display: inline;
+    }
+
     .list-filter-bar {
       display: flex;
       align-items: center;
@@ -1342,6 +1367,7 @@
                 <th>Clock Out</th>
                 <th>Break (min)</th>
                 <th>Hours</th>
+                <th class="day-pay-column">Day Pay Amount</th>
               </tr>
             </thead>
             <tbody id="timeRows"></tbody>
@@ -1819,106 +1845,60 @@
 
     $("timeRows").innerHTML = DAYS.map(day => `
       <tr data-day="${day}">
-        <td>
-          <strong>${day}</strong>
-          <label class="day-pay-toggle">
-            <input type="checkbox" class="day-pay-check">
-            <span class="day-pay-track"><span class="day-pay-thumb"></span></span>
-            <span class="day-pay-toggle-text">Day Pay</span>
-          </label>
-        </td>
+        <td><strong>${day}</strong></td>
         <td class="time-cell clock-in-cell">
           <div class="time-field">
-            <input
-              class="clock-in"
-              type="text"
-              placeholder="8 or 8:30"
-              inputmode="text"
-            >
+            <input class="clock-in" type="text" placeholder="Optional" inputmode="text">
             <select class="clock-in-period time-period">
               <option value="AM" selected>AM</option>
               <option value="PM">PM</option>
             </select>
           </div>
-          <div class="day-pay-entry">
-            <span class="day-pay-dollar">$</span>
-            <input
-              class="day-pay-amount"
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="0.00"
-            >
-          </div>
         </td>
         <td class="time-cell clock-out-cell">
           <div class="time-field">
-            <input
-              class="clock-out"
-              type="text"
-              placeholder="5 or 5:30"
-              inputmode="text"
-            >
+            <input class="clock-out" type="text" placeholder="Optional" inputmode="text">
             <select class="clock-out-period time-period">
               <option value="AM">AM</option>
               <option value="PM" selected>PM</option>
             </select>
           </div>
-          <div class="day-pay-hours-entry">
-            <input
-              class="day-pay-hours"
-              type="number"
-              min="0"
-              step="0.25"
-              placeholder="hrs (opt.)"
-            >
-          </div>
         </td>
         <td class="time-cell break-cell">
           <input class="break" type="number" min="0" value="0">
         </td>
-        <td>
-          <span class="hours-display">0.00</span>
-          <span class="day-pay-flat-label">Flat Pay</span>
+        <td><span class="hours-display">0.00</span></td>
+        <td class="day-pay-cell">
+          <div class="day-pay-entry" style="display:flex">
+            <span class="day-pay-dollar">$</span>
+            <input class="day-pay-amount" type="number" min="0" step="0.01" placeholder="0.00">
+          </div>
         </td>
       </tr>
     `).join("");
 
-    document.querySelectorAll(".day-pay-check").forEach(chk => {
-      chk.addEventListener("change", () => {
-        const row = chk.closest("tr");
-        row.classList.toggle("is-day-pay", chk.checked);
-        if (chk.checked) {
-          const emp = selectedEmployee();
-          const dpAmt = row.querySelector(".day-pay-amount");
-          if (emp?.dayPayRate && !dpAmt.value) {
-            dpAmt.value = emp.dayPayRate;
-          }
-        }
-        calculate();
-      });
-    });
+    let currentPayMode = "hourly";
 
     document.querySelectorAll(".day-pay-amount").forEach(input => {
       input.addEventListener("input", calculate);
     });
 
     function setPayMode(mode) {
+      currentPayMode = mode === "daypay" ? "daypay" : "hourly";
+
       document.querySelectorAll(".pay-mode-btn").forEach(btn => {
-        btn.classList.toggle("active", btn.dataset.mode === mode);
+        btn.classList.toggle("active", btn.dataset.mode === currentPayMode);
       });
 
+      const dayPayOn = currentPayMode === "daypay";
+      $("timeRows").closest("table").classList.toggle("daypay-mode", dayPayOn);
+
       document.querySelectorAll("#timeRows tr").forEach(row => {
-        const chk = row.querySelector(".day-pay-check");
-        const on = mode === "daypay";
-        chk.checked = on;
-        row.classList.toggle("is-day-pay", on);
-        if (on) {
+        row.classList.toggle("is-day-pay", dayPayOn);
+        if (dayPayOn) {
           const emp = selectedEmployee();
           const dpAmt = row.querySelector(".day-pay-amount");
-          if (emp?.dayPayRate && !dpAmt.value) {
-            dpAmt.value = emp.dayPayRate;
-          }
+          if (emp?.dayPayRate && !dpAmt.value) dpAmt.value = emp.dayPayRate;
         }
       });
 
@@ -2290,26 +2270,13 @@
       $("employeeSearch").value = "";
       $("rateDisplay").textContent = money(0);
       hideDeptBadge();
-      document.querySelectorAll(".pay-mode-btn").forEach(btn => {
-        btn.classList.toggle("active", btn.dataset.mode === "hourly");
-      });
-
       document
         .querySelectorAll("#timeRows input")
         .forEach(input => {
-          if (input.classList.contains("day-pay-check")) {
-            input.checked = false;
-          } else {
-            input.value =
-              input.classList.contains("break")
-                ? "0"
-                : "";
-          }
+          input.value = input.classList.contains("break") ? "0" : "";
         });
 
-      document
-        .querySelectorAll("#timeRows tr")
-        .forEach(row => row.classList.remove("is-day-pay"));
+      setPayMode("hourly");
 
       document
         .querySelectorAll(".clock-in-period")
@@ -2354,11 +2321,17 @@
       document
         .querySelectorAll("#timeRows tr")
         .forEach(row => {
-          const isDayPay = row.querySelector(".day-pay-check").checked;
+          const isDayPay = currentPayMode === "daypay";
 
           if (isDayPay) {
             const amt = Number(row.querySelector(".day-pay-amount").value || 0);
-            const hrs = Number(row.querySelector(".day-pay-hours").value || 0);
+            const hrs = hoursBetween(
+              row.querySelector(".clock-in").value,
+              row.querySelector(".clock-out").value,
+              row.querySelector(".break").value,
+              row.querySelector(".clock-in-period").value,
+              row.querySelector(".clock-out-period").value
+            );
             row.querySelector(".hours-display").textContent = hrs > 0 ? hrs.toFixed(2) : "—";
             totalDayPay += amt;
             totalDayPayHours += hrs;
@@ -3023,42 +2996,19 @@
           const day = row.dataset.day;
           const time = record.times?.[day] || {};
 
-          if (time.dayPay) {
-            const chk = row.querySelector(".day-pay-check");
-            chk.checked = true;
-            row.classList.add("is-day-pay");
-            row.querySelector(".day-pay-amount").value =
-              time.dayPayAmount ?? "";
-            row.querySelector(".day-pay-hours").value =
-              time.dayPayHours > 0 ? time.dayPayHours : "";
-          } else {
-            const chk = row.querySelector(".day-pay-check");
-            chk.checked = false;
-            row.classList.remove("is-day-pay");
+          const clockInDisplay = firebaseTimeToDisplay(time.in);
+          const clockOutDisplay = firebaseTimeToDisplay(time.out);
 
-            const clockInDisplay =
-              firebaseTimeToDisplay(time.in);
-
-            const clockOutDisplay =
-              firebaseTimeToDisplay(time.out);
-
-            row.querySelector(".clock-in").value =
-              clockInDisplay.time;
-
-            row.querySelector(".clock-in-period").value =
-              clockInDisplay.period;
-
-            row.querySelector(".clock-out").value =
-              clockOutDisplay.time;
-
-            row.querySelector(".clock-out-period").value =
-              clockOutDisplay.period;
-
-            row.querySelector(".break").value =
-              time.breakMinutes ?? 0;
-          }
+          row.querySelector(".clock-in").value = clockInDisplay.time;
+          row.querySelector(".clock-in-period").value = clockInDisplay.period;
+          row.querySelector(".clock-out").value = clockOutDisplay.time;
+          row.querySelector(".clock-out-period").value = clockOutDisplay.period;
+          row.querySelector(".break").value = time.breakMinutes ?? 0;
+          row.querySelector(".day-pay-amount").value = time.dayPayAmount ?? "";
         });
 
+      const recordUsesDayPay = Object.values(record.times || {}).some(time => time?.dayPay);
+      setPayMode(recordUsesDayPay ? "daypay" : "hourly");
       calculate();
 
       $("savePayroll").textContent = "Update Payroll";
@@ -3112,16 +3062,38 @@
           .querySelectorAll("#timeRows tr")
           .forEach(row => {
             const day = row.dataset.day;
-            const isDayPay = row.querySelector(".day-pay-check").checked;
+            const isDayPay = currentPayMode === "daypay";
 
             if (isDayPay) {
-              const dayPayAmount = Number(
-                row.querySelector(".day-pay-amount").value || 0
+              normalizeVisibleTimeInput(row.querySelector(".clock-in"));
+              normalizeVisibleTimeInput(row.querySelector(".clock-out"));
+
+              const dayPayAmount = Number(row.querySelector(".day-pay-amount").value || 0);
+              const breakMinutes = Number(row.querySelector(".break").value || 0);
+              const clockIn = timeToFirebaseValue(
+                row.querySelector(".clock-in").value,
+                row.querySelector(".clock-in-period").value
               );
-              const dayPayHours = Number(
-                row.querySelector(".day-pay-hours").value || 0
+              const clockOut = timeToFirebaseValue(
+                row.querySelector(".clock-out").value,
+                row.querySelector(".clock-out-period").value
               );
-              times[day] = { dayPay: true, dayPayAmount, ...(dayPayHours > 0 && { dayPayHours }) };
+              const dayPayHours = hoursBetween(
+                row.querySelector(".clock-in").value,
+                row.querySelector(".clock-out").value,
+                breakMinutes,
+                row.querySelector(".clock-in-period").value,
+                row.querySelector(".clock-out-period").value
+              );
+
+              times[day] = {
+                dayPay: true,
+                dayPayAmount,
+                in: clockIn,
+                out: clockOut,
+                breakMinutes,
+                ...(dayPayHours > 0 && { dayPayHours })
+              };
               dayHours[day] = dayPayHours;
             } else {
               normalizeVisibleTimeInput(
