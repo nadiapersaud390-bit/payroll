@@ -229,6 +229,65 @@
       font-size: 25px;
     }
 
+    .pay-mode-control {
+      display: grid;
+      gap: 7px;
+      align-content: end;
+    }
+
+    .pay-mode-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #475569;
+    }
+
+    .pay-mode-btns {
+      display: flex;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      overflow: hidden;
+      height: 44px;
+    }
+
+    .pay-mode-btn {
+      flex: 1;
+      padding: 0 10px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      background: white;
+      color: #64748b;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+    }
+
+    .pay-mode-btn:first-child {
+      border-right: 1.5px solid #e2e8f0;
+    }
+
+    .pay-mode-btn.active[data-mode="hourly"] {
+      background: #1e3a5f;
+      color: white;
+    }
+
+    .pay-mode-btn.active[data-mode="daypay"] {
+      background: #e85d04;
+      color: white;
+    }
+
+    .pay-mode-btn:not(.active):hover {
+      background: #f8fafc;
+    }
+
+    .pay-mode-rate {
+      font-size: 22px;
+      font-weight: 800;
+      color: #1e3a5f;
+      line-height: 1;
+    }
+
     .week-note {
       color: #64748b;
       font-size: 12px;
@@ -750,56 +809,167 @@
     .day-pay-toggle {
       display: inline-flex;
       align-items: center;
-      gap: 4px;
-      margin-top: 4px;
-      font-size: 11px;
-      font-weight: 600;
-      color: #64748b;
+      gap: 7px;
+      margin-top: 6px;
       cursor: pointer;
-      white-space: nowrap;
+      user-select: none;
     }
 
     .day-pay-toggle input[type="checkbox"] {
-      accent-color: #e85d04;
-      width: 13px;
-      height: 13px;
-      cursor: pointer;
+      display: none;
     }
 
-    tr.is-day-pay .time-cell {
+    .day-pay-track {
+      width: 36px;
+      height: 20px;
+      background: #cbd5e1;
+      border-radius: 10px;
+      position: relative;
+      transition: background 0.18s;
+      flex-shrink: 0;
+    }
+
+    .day-pay-thumb {
+      width: 14px;
+      height: 14px;
+      background: white;
+      border-radius: 50%;
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      transition: left 0.18s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    }
+
+    .day-pay-toggle input:checked ~ .day-pay-track {
+      background: #e85d04;
+    }
+
+    .day-pay-toggle input:checked ~ .day-pay-track .day-pay-thumb {
+      left: 19px;
+    }
+
+    .day-pay-toggle-text {
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      letter-spacing: 0.01em;
+    }
+
+    tr.is-day-pay {
+      background: #fff7ed;
+    }
+
+    tr.is-day-pay td:first-child {
+      border-left: 3px solid #e85d04;
+    }
+
+    tr.is-day-pay .day-pay-toggle-text {
+      color: #c2410c;
+    }
+
+    tr.is-day-pay .break-cell {
       opacity: 0.25;
       pointer-events: none;
+    }
+
+    tr.is-day-pay .clock-out-cell .time-field {
+      display: none;
+    }
+
+    tr.is-day-pay .clock-in-cell .time-field {
+      display: none;
+    }
+
+    .day-pay-hours-entry {
+      display: none;
+      align-items: center;
+      gap: 6px;
+    }
+
+    tr.is-day-pay .day-pay-hours-entry {
+      display: flex;
+    }
+
+    .day-pay-hours {
+      width: 100%;
+      padding: 9px 10px;
+      border: 1.5px solid #e85d04;
+      border-radius: 8px;
+      font: inherit;
+      font-size: 14px;
+      background: white;
+      color: #1e3a5f;
+      min-width: 0;
+    }
+
+    .day-pay-hours::placeholder {
+      color: #94a3b8;
+    }
+
+    .day-pay-hours:focus {
+      outline: none;
+      border-color: #c2410c;
+      box-shadow: 0 0 0 3px rgba(232,93,4,0.12);
+    }
+
+    .day-pay-hours-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #94a3b8;
+      white-space: nowrap;
     }
 
     tr.is-day-pay .hours-display {
       display: none;
     }
 
-    tr:not(.is-day-pay) .day-pay-amount {
-      display: none !important;
+    .day-pay-entry {
+      display: none;
+      align-items: center;
+      gap: 6px;
+    }
+
+    tr.is-day-pay .day-pay-entry {
+      display: flex;
+    }
+
+    .day-pay-dollar {
+      font-size: 18px;
+      font-weight: 700;
+      color: #e85d04;
+      line-height: 1;
     }
 
     .day-pay-amount {
-      width: 90px;
-      border: 1.5px solid #e85d04;
-      border-radius: 6px;
-      padding: 4px 6px;
-      font-size: 13px;
+      flex: 1;
+      min-width: 0;
+      height: 44px;
+      border: 2px solid #e85d04;
+      border-radius: 9px;
+      padding: 9px 12px;
+      font-size: 16px;
       font-weight: 700;
-      color: #e85d04;
+      color: #c2410c;
+      background: #fff7ed;
       text-align: right;
     }
 
-    .day-pay-label {
-      font-size: 10px;
+    .day-pay-amount:focus {
+      outline: 2px solid rgba(232,93,4,0.25);
+      border-color: #c2410c;
+    }
+
+    .day-pay-flat-label {
+      display: none;
+      font-size: 11px;
       font-weight: 700;
       color: #e85d04;
       text-transform: uppercase;
-      letter-spacing: 0.04em;
-      display: none;
+      letter-spacing: 0.05em;
     }
 
-    tr.is-day-pay .day-pay-label {
+    tr.is-day-pay .day-pay-flat-label {
       display: block;
     }
 
@@ -1147,9 +1317,13 @@
             <span class="week-note">Week ends Friday</span>
           </label>
 
-          <div class="metric">
-            <span>Hourly rate</span>
-            <strong id="rateDisplay">$0.00</strong>
+          <div class="pay-mode-control">
+            <span class="pay-mode-label">Pay mode</span>
+            <div class="pay-mode-btns">
+              <button type="button" class="pay-mode-btn active" data-mode="hourly">Hourly</button>
+              <button type="button" class="pay-mode-btn" data-mode="daypay">Day Pay</button>
+            </div>
+            <strong id="rateDisplay" class="pay-mode-rate">$0.00</strong>
           </div>
         </div>
 
@@ -1648,10 +1822,12 @@
         <td>
           <strong>${day}</strong>
           <label class="day-pay-toggle">
-            <input type="checkbox" class="day-pay-check"> Day Pay
+            <input type="checkbox" class="day-pay-check">
+            <span class="day-pay-track"><span class="day-pay-thumb"></span></span>
+            <span class="day-pay-toggle-text">Day Pay</span>
           </label>
         </td>
-        <td class="time-cell">
+        <td class="time-cell clock-in-cell">
           <div class="time-field">
             <input
               class="clock-in"
@@ -1664,8 +1840,18 @@
               <option value="PM">PM</option>
             </select>
           </div>
+          <div class="day-pay-entry">
+            <span class="day-pay-dollar">$</span>
+            <input
+              class="day-pay-amount"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="0.00"
+            >
+          </div>
         </td>
-        <td class="time-cell">
+        <td class="time-cell clock-out-cell">
           <div class="time-field">
             <input
               class="clock-out"
@@ -1678,18 +1864,22 @@
               <option value="PM" selected>PM</option>
             </select>
           </div>
+          <div class="day-pay-hours-entry">
+            <input
+              class="day-pay-hours"
+              type="number"
+              min="0"
+              step="0.25"
+              placeholder="hrs (opt.)"
+            >
+          </div>
         </td>
-        <td class="time-cell"><input class="break" type="number" min="0" value="0"></td>
+        <td class="time-cell break-cell">
+          <input class="break" type="number" min="0" value="0">
+        </td>
         <td>
           <span class="hours-display">0.00</span>
-          <span class="day-pay-label">Day Pay</span>
-          <input
-            class="day-pay-amount"
-            type="number"
-            min="0"
-            step="0.01"
-            placeholder="0.00"
-          >
+          <span class="day-pay-flat-label">Flat Pay</span>
         </td>
       </tr>
     `).join("");
@@ -1711,6 +1901,32 @@
 
     document.querySelectorAll(".day-pay-amount").forEach(input => {
       input.addEventListener("input", calculate);
+    });
+
+    function setPayMode(mode) {
+      document.querySelectorAll(".pay-mode-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.mode === mode);
+      });
+
+      document.querySelectorAll("#timeRows tr").forEach(row => {
+        const chk = row.querySelector(".day-pay-check");
+        const on = mode === "daypay";
+        chk.checked = on;
+        row.classList.toggle("is-day-pay", on);
+        if (on) {
+          const emp = selectedEmployee();
+          const dpAmt = row.querySelector(".day-pay-amount");
+          if (emp?.dayPayRate && !dpAmt.value) {
+            dpAmt.value = emp.dayPayRate;
+          }
+        }
+      });
+
+      calculate();
+    }
+
+    document.querySelectorAll(".pay-mode-btn").forEach(btn => {
+      btn.addEventListener("click", () => setPayMode(btn.dataset.mode));
     });
 
     function cleanTimeEntry(value) {
@@ -2074,6 +2290,9 @@
       $("employeeSearch").value = "";
       $("rateDisplay").textContent = money(0);
       hideDeptBadge();
+      document.querySelectorAll(".pay-mode-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.mode === "hourly");
+      });
 
       document
         .querySelectorAll("#timeRows input")
@@ -2129,6 +2348,7 @@
 
     function calculate() {
       let totalHours = 0;
+      let totalDayPayHours = 0;
       let totalDayPay = 0;
 
       document
@@ -2138,8 +2358,10 @@
 
           if (isDayPay) {
             const amt = Number(row.querySelector(".day-pay-amount").value || 0);
-            row.querySelector(".hours-display").textContent = "—";
+            const hrs = Number(row.querySelector(".day-pay-hours").value || 0);
+            row.querySelector(".hours-display").textContent = hrs > 0 ? hrs.toFixed(2) : "—";
             totalDayPay += amt;
+            totalDayPayHours += hrs;
           } else {
             const hours = hoursBetween(
               row.querySelector(".clock-in").value,
@@ -2155,8 +2377,9 @@
 
       const hourlyPay = totalHours * Number(selectedEmployee()?.hourlyRate || 0);
       const grossPay = hourlyPay + totalDayPay;
+      const allHours = totalHours + totalDayPayHours;
 
-      $("totalHours").textContent = totalHours.toFixed(2);
+      $("totalHours").textContent = allHours.toFixed(2);
 
       const wrap = $("dayPayTotalWrap");
       wrap.style.display = totalDayPay > 0 ? "" : "none";
@@ -2164,7 +2387,7 @@
 
       $("grossPay").textContent = money(grossPay);
 
-      return { totalHours, totalDayPay, grossPay };
+      return { totalHours: allHours, totalDayPay, grossPay };
     }
 
     document
@@ -2806,6 +3029,8 @@
             row.classList.add("is-day-pay");
             row.querySelector(".day-pay-amount").value =
               time.dayPayAmount ?? "";
+            row.querySelector(".day-pay-hours").value =
+              time.dayPayHours > 0 ? time.dayPayHours : "";
           } else {
             const chk = row.querySelector(".day-pay-check");
             chk.checked = false;
@@ -2893,8 +3118,11 @@
               const dayPayAmount = Number(
                 row.querySelector(".day-pay-amount").value || 0
               );
-              times[day] = { dayPay: true, dayPayAmount };
-              dayHours[day] = 0;
+              const dayPayHours = Number(
+                row.querySelector(".day-pay-hours").value || 0
+              );
+              times[day] = { dayPay: true, dayPayAmount, ...(dayPayHours > 0 && { dayPayHours }) };
+              dayHours[day] = dayPayHours;
             } else {
               normalizeVisibleTimeInput(
                 row.querySelector(".clock-in")
