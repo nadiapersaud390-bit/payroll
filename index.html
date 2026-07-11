@@ -541,6 +541,68 @@
       background: white;
     }
 
+    .history-week-pager {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin: 14px 0;
+      padding: 12px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      background: white;
+    }
+
+    .history-week-pager-info {
+      display: grid;
+      gap: 2px;
+      text-align: center;
+      color: #14213d;
+      font-size: 13px;
+      font-weight: 800;
+    }
+
+    .history-week-pager-info small {
+      color: #64748b;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .history-page-btn {
+      min-width: 120px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: #14213d;
+      color: white;
+      padding: 9px 12px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .history-page-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.4;
+    }
+
+    @media (max-width: 620px) {
+      .history-week-pager {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .history-week-pager-info {
+        grid-column: 1 / -1;
+        grid-row: 1;
+      }
+
+      .history-page-btn {
+        min-width: 0;
+        width: 100%;
+      }
+    }
+
     .payroll-edit-banner {
       display: flex;
       justify-content: space-between;
@@ -1901,6 +1963,19 @@
           Clock In starts as AM. Clock Out starts as PM.
         </div>
 
+        <div id="historyWeekPager" class="history-week-pager hidden">
+          <button id="historyNewerWeek" class="history-page-btn" type="button">
+            ← Newer Week
+          </button>
+          <div class="history-week-pager-info">
+            <span id="historyWeekPageLabel">Week 1 of 1</span>
+            <small id="historyWeekDateLabel"></small>
+          </div>
+          <button id="historyOlderWeek" class="history-page-btn" type="button">
+            Next Week →
+          </button>
+        </div>
+
         <div class="card table-wrap">
           <table>
             <thead>
@@ -1985,6 +2060,7 @@
     let editingPayrollId = "";
     let showInactive = false;
     let activeHistoryView = "current";
+    let historyWeekPage = 0;
     let activeDepartmentFilter = "";
 
     const $ = id => document.getElementById(id);
@@ -3570,6 +3646,7 @@
 
     function setHistoryView(view) {
       activeHistoryView = view;
+      historyWeekPage = 0;
 
       $("currentHistoryTab").classList.toggle(
         "active",
@@ -3599,19 +3676,24 @@
       () => setHistoryView("past")
     );
 
+    function resetHistoryWeekPageAndRender() {
+      historyWeekPage = 0;
+      renderHistory();
+    }
+
     $("historySearch").addEventListener(
       "input",
-      renderHistory
+      resetHistoryWeekPageAndRender
     );
 
     $("historyFilterStart").addEventListener(
       "change",
-      renderHistory
+      resetHistoryWeekPageAndRender
     );
 
     $("historyFilterEnd").addEventListener(
       "change",
-      renderHistory
+      resetHistoryWeekPageAndRender
     );
 
     $("historyFilterClear").addEventListener(
@@ -3620,9 +3702,22 @@
         $("historySearch").value = "";
         $("historyFilterStart").value = "";
         $("historyFilterEnd").value = "";
+        historyWeekPage = 0;
         renderHistory();
       }
     );
+
+    $("historyNewerWeek").addEventListener("click", () => {
+      if (historyWeekPage > 0) {
+        historyWeekPage -= 1;
+        renderHistory();
+      }
+    });
+
+    $("historyOlderWeek").addEventListener("click", () => {
+      historyWeekPage += 1;
+      renderHistory();
+    });
 
     function renderHistory() {
       const rows = visibleHistoryRows();
@@ -3691,6 +3786,7 @@
       }
 
       if (!rows.length) {
+        $("historyWeekPager").classList.add("hidden");
         $("historyRows").innerHTML = `
           <tr>
             <td colspan="8" class="empty">
@@ -3732,10 +3828,13 @@
           String(b.end || b.start).localeCompare(String(a.end || a.start))
         );
 
+        historyWeekPage = Math.max(0, Math.min(historyWeekPage, orderedWeeks.length - 1));
+        const week = orderedWeeks[historyWeekPage];
+        const weekIndex = historyWeekPage;
+        const weekRows = week.rows;
         let html = "";
 
-        orderedWeeks.forEach((week, weekIndex) => {
-          const weekRows = week.rows;
+        {
           const weekHours = weekRows.reduce(
             (sum, row) => sum + Number(row.totalHours || 0),
             0
@@ -3748,21 +3847,13 @@
             ? `${week.start} to ${week.end}`
             : week.end || week.start || "Date unavailable";
 
-          if (weekIndex > 0) {
-            html += `
-              <tr class="history-week-spacer">
-                <td colspan="8"></td>
-              </tr>
-            `;
-          }
-
           html += `
             <tr class="history-week-header">
               <td colspan="8">
                 <div class="history-week-card">
                   <div class="history-week-main">
                     <span class="history-week-title">
-                      ${weekIndex === 0 ? "Newest week" : "Previous week"}: ${periodLabel}
+                      ${weekIndex === 0 ? "Newest week" : `Week ${weekIndex + 1}`}: ${periodLabel}
                     </span>
                     <span class="history-week-stats">
                       ${weekRows.length} ${weekRows.length === 1 ? "record" : "records"}
@@ -3846,9 +3937,16 @@
               html += historyRowHtml(row);
             });
           });
-        });
+        }
 
         $("historyRows").innerHTML = html;
+
+        $("historyWeekPager").classList.toggle("hidden", orderedWeeks.length <= 1);
+        $("historyWeekPageLabel").textContent =
+          `Week ${historyWeekPage + 1} of ${orderedWeeks.length}`;
+        $("historyWeekDateLabel").textContent = periodLabel;
+        $("historyNewerWeek").disabled = historyWeekPage === 0;
+        $("historyOlderWeek").disabled = historyWeekPage >= orderedWeeks.length - 1;
       }
 
       $("selectAllHistory").checked = false;
