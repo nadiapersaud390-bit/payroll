@@ -502,6 +502,38 @@
       color: #64748b;
     }
 
+    .history-week-main {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .history-week-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+
+    .history-week-export {
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      background: white;
+      color: #14213d;
+      padding: 7px 11px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .history-week-export:hover {
+      background: #eef2f7;
+      border-color: #94a3b8;
+    }
+
     .history-week-spacer td {
       height: 12px;
       padding: 0;
@@ -3728,16 +3760,38 @@
             <tr class="history-week-header">
               <td colspan="8">
                 <div class="history-week-card">
-                  <span class="history-week-title">
-                    ${weekIndex === 0 ? "Newest week" : "Previous week"}: ${periodLabel}
-                  </span>
-                  <span class="history-week-stats">
-                    ${weekRows.length} ${weekRows.length === 1 ? "record" : "records"}
-                    &nbsp;·&nbsp;
-                    ${weekHours.toFixed(2)} hrs
-                    &nbsp;·&nbsp;
-                    ${money(weekPay)}
-                  </span>
+                  <div class="history-week-main">
+                    <span class="history-week-title">
+                      ${weekIndex === 0 ? "Newest week" : "Previous week"}: ${periodLabel}
+                    </span>
+                    <span class="history-week-stats">
+                      ${weekRows.length} ${weekRows.length === 1 ? "record" : "records"}
+                      &nbsp;·&nbsp;
+                      ${weekHours.toFixed(2)} hrs
+                      &nbsp;·&nbsp;
+                      ${money(weekPay)}
+                    </span>
+                  </div>
+                  <div class="history-week-actions">
+                    <button
+                      type="button"
+                      class="history-week-export"
+                      data-week-export="csv"
+                      data-week-start="${escapeHtml(week.start)}"
+                      data-week-end="${escapeHtml(week.end)}"
+                    >
+                      Export Week CSV
+                    </button>
+                    <button
+                      type="button"
+                      class="history-week-export"
+                      data-week-export="pdf"
+                      data-week-start="${escapeHtml(week.start)}"
+                      data-week-end="${escapeHtml(week.end)}"
+                    >
+                      Export Week PDF
+                    </button>
+                  </div>
                 </div>
               </td>
             </tr>
@@ -4044,6 +4098,39 @@
       XLSX.writeFile(workbook, filename);
     }
 
+    function exportCsv(rows, filename, columns) {
+      const escapeCsv = value => {
+        const text = String(value ?? "");
+        return /[",\n\r]/.test(text)
+          ? `"${text.replace(/"/g, '""')}"`
+          : text;
+      };
+
+      const lines = [
+        columns.map(column =>
+          escapeCsv(COLUMN_DEFINITIONS[column].label)
+        ).join(","),
+        ...rows.map(row =>
+          columns.map(column =>
+            escapeCsv(COLUMN_DEFINITIONS[column].value(row))
+          ).join(",")
+        )
+      ];
+
+      const blob = new Blob(
+        ["\ufeff" + lines.join("\r\n")],
+        { type: "text/csv;charset=utf-8" }
+      );
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
     function exportPdf(rows, filename, columns) {
       const { jsPDF } = window.jspdf;
 
@@ -4109,6 +4196,38 @@
         );
       }
     }
+
+    $("historyRows").addEventListener("click", event => {
+      const button = event.target.closest("[data-week-export]");
+      if (!button) return;
+
+      const start = button.dataset.weekStart || "";
+      const end = button.dataset.weekEnd || "";
+      const rows = visibleHistoryRows().filter(row => {
+        const rowStart = row.payrollStartDate || "";
+        const rowEnd = row.payrollEndDate || row.weekEnding || "";
+        return rowStart === start && rowEnd === end;
+      });
+      const columns = selectedColumns();
+
+      if (!rows.length) {
+        notice("No payroll records are available for this week.");
+        return;
+      }
+
+      if (!columns.length) {
+        notice("Select at least one column to export.");
+        return;
+      }
+
+      const datePart = `${start || "unknown"}_to_${end || "unknown"}`;
+
+      if (button.dataset.weekExport === "csv") {
+        exportCsv(rows, `payroll-week-${datePart}.csv`, columns);
+      } else {
+        exportPdf(rows, `payroll-week-${datePart}.pdf`, columns);
+      }
+    });
 
     $("historyExcel").addEventListener(
       "click",
