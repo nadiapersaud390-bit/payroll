@@ -235,6 +235,55 @@
       font-weight: 400;
     }
 
+    .dept-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 11px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      border: 1.5px solid transparent;
+      margin-top: 2px;
+      width: fit-content;
+    }
+
+    .dept-badge::before {
+      content: "";
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+      opacity: 0.7;
+    }
+
+    .dept-group-header td {
+      padding: 8px 14px;
+      font-size: 13px;
+    }
+
+    .dept-group-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 10px;
+      border-radius: 14px;
+      font-size: 12px;
+      font-weight: 700;
+      border: 1.5px solid transparent;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    .dept-group-stats {
+      font-size: 12px;
+      font-weight: 600;
+      color: #475569;
+      vertical-align: middle;
+    }
+
     .payroll-edit-banner {
       display: flex;
       justify-content: space-between;
@@ -562,6 +611,198 @@
       overflow-wrap: anywhere;
     }
 
+    .security-report-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .security-report-subtitle {
+      font-size: 13px;
+      color: #64748b;
+      margin: 0;
+    }
+
+    .security-month-card {
+      margin-bottom: 16px;
+      overflow: hidden;
+      padding: 0;
+    }
+
+    .security-month-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 16px 20px;
+      cursor: pointer;
+      user-select: none;
+      border-bottom: 1px solid transparent;
+      transition: background 0.15s;
+    }
+
+    .security-month-header:hover {
+      background: #f8fafc;
+    }
+
+    .security-month-header.open {
+      border-bottom-color: #e2e8f0;
+    }
+
+    .security-month-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #14213d;
+      margin: 0 0 4px;
+    }
+
+    .security-month-stats {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      font-size: 13px;
+      color: #64748b;
+    }
+
+    .security-month-stats strong {
+      color: #14213d;
+    }
+
+    .security-month-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .security-expand-btn {
+      background: none;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      width: 32px;
+      height: 32px;
+      font-size: 13px;
+      cursor: pointer;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+    }
+
+    .security-expand-btn:hover {
+      background: #f1f5f9;
+    }
+
+    .security-month-body {
+      padding: 0 20px 20px;
+    }
+
+    .security-month-body.hidden {
+      display: none;
+    }
+
+    .security-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+      font-size: 13px;
+    }
+
+    .security-table th {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 2px solid #e2e8f0;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #64748b;
+      white-space: nowrap;
+    }
+
+    .security-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #f1f5f9;
+      color: #14213d;
+    }
+
+    .security-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .security-total-row td {
+      background: #f8fafc;
+      font-weight: 700;
+      border-top: 2px solid #e2e8f0 !important;
+    }
+
+    .security-empty {
+      text-align: center;
+      color: #94a3b8;
+      padding: 40px 20px;
+      font-size: 14px;
+    }
+
+    .day-pay-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #64748b;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .day-pay-toggle input[type="checkbox"] {
+      accent-color: #e85d04;
+      width: 13px;
+      height: 13px;
+      cursor: pointer;
+    }
+
+    tr.is-day-pay .time-cell {
+      opacity: 0.25;
+      pointer-events: none;
+    }
+
+    tr.is-day-pay .hours-display {
+      display: none;
+    }
+
+    tr:not(.is-day-pay) .day-pay-amount {
+      display: none !important;
+    }
+
+    .day-pay-amount {
+      width: 90px;
+      border: 1.5px solid #e85d04;
+      border-radius: 6px;
+      padding: 4px 6px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #e85d04;
+      text-align: right;
+    }
+
+    .day-pay-label {
+      font-size: 10px;
+      font-weight: 700;
+      color: #e85d04;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      display: none;
+    }
+
+    tr.is-day-pay .day-pay-label {
+      display: block;
+    }
+
     .list-filter-bar {
       display: flex;
       align-items: center;
@@ -845,6 +1086,7 @@
         <button data-tab="employees">Employees</button>
         <button data-tab="summary">Employee Summary</button>
         <button data-tab="history">Payroll History</button>
+        <button data-tab="security">Security Monthly</button>
       </nav>
     </aside>
 
@@ -889,6 +1131,8 @@
               id="employeeSearchResults"
               class="employee-search-results hidden"
             ></div>
+
+            <div id="deptBadge" class="dept-badge hidden"></div>
           </label>
 
           <label>
@@ -936,6 +1180,11 @@
             <strong id="totalHours">0.00</strong>
           </div>
 
+          <div id="dayPayTotalWrap" style="display:none">
+            <span>Day pay</span>
+            <strong id="dayPayTotal">$0.00</strong>
+          </div>
+
           <div>
             <span>Gross pay</span>
             <strong id="grossPay">$0.00</strong>
@@ -976,6 +1225,16 @@
               </label>
 
               <label>
+                Department
+                <select id="empDepartment">
+                  <option value="">— Select department —</option>
+                  <option value="Security">Security</option>
+                  <option value="PKD - Price King Distribution">PKD - Price King Distribution</option>
+                  <option value="J's Outlet">J's Outlet</option>
+                </select>
+              </label>
+
+              <label>
                 Location (optional)
                 <input
                   id="empLocation"
@@ -991,6 +1250,17 @@
                   type="number"
                   min="0"
                   step="0.01"
+                >
+              </label>
+
+              <label>
+                Day Pay Rate (optional)
+                <input
+                  id="empDayRate"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="e.g. 10000 — used when Day Pay is selected"
                 >
               </label>
 
@@ -1050,6 +1320,15 @@
                 </button>
                 <span id="employeeCount" class="employee-count">
                   0 employees
+                </span>
+              </div>
+            </div>
+
+            <div class="location-summary">
+              <p class="location-summary-title">Employees by department</p>
+              <div id="departmentCounts" class="location-counts">
+                <span class="location-count-item">
+                  No employees yet
                 </span>
               </div>
             </div>
@@ -1130,6 +1409,17 @@
               placeholder="Name or employee ID"
               autocomplete="off"
             >
+          </label>
+
+          <label>
+            Department
+            <select id="historyDeptFilter">
+              <option value="">All departments</option>
+              <option value="Security">Security</option>
+              <option value="PKD - Price King Distribution">PKD - Price King Distribution</option>
+              <option value="J's Outlet">J's Outlet</option>
+              <option value="__unassigned__">Unassigned</option>
+            </select>
           </label>
 
           <label>
@@ -1238,6 +1528,18 @@
           </table>
         </div>
       </section>
+      <section id="securitySection" class="hidden">
+        <div class="security-report-header">
+          <div>
+            <p class="security-report-subtitle">Weekly records grouped by month · Security department only</p>
+          </div>
+          <div class="actions" style="margin-bottom:0">
+            <button id="securityCsvAll" class="btn dark">Export All CSV</button>
+            <button id="securityPdfAll" class="btn dark">Export All PDF</button>
+          </div>
+        </div>
+        <div id="securityMonthList"></div>
+      </section>
     </main>
   </div>
 
@@ -1343,8 +1645,13 @@
 
     $("timeRows").innerHTML = DAYS.map(day => `
       <tr data-day="${day}">
-        <td><strong>${day}</strong></td>
         <td>
+          <strong>${day}</strong>
+          <label class="day-pay-toggle">
+            <input type="checkbox" class="day-pay-check"> Day Pay
+          </label>
+        </td>
+        <td class="time-cell">
           <div class="time-field">
             <input
               class="clock-in"
@@ -1358,7 +1665,7 @@
             </select>
           </div>
         </td>
-        <td>
+        <td class="time-cell">
           <div class="time-field">
             <input
               class="clock-out"
@@ -1372,10 +1679,39 @@
             </select>
           </div>
         </td>
-        <td><input class="break" type="number" min="0" value="0"></td>
-        <td class="hours">0.00</td>
+        <td class="time-cell"><input class="break" type="number" min="0" value="0"></td>
+        <td>
+          <span class="hours-display">0.00</span>
+          <span class="day-pay-label">Day Pay</span>
+          <input
+            class="day-pay-amount"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="0.00"
+          >
+        </td>
       </tr>
     `).join("");
+
+    document.querySelectorAll(".day-pay-check").forEach(chk => {
+      chk.addEventListener("change", () => {
+        const row = chk.closest("tr");
+        row.classList.toggle("is-day-pay", chk.checked);
+        if (chk.checked) {
+          const emp = selectedEmployee();
+          const dpAmt = row.querySelector(".day-pay-amount");
+          if (emp?.dayPayRate && !dpAmt.value) {
+            dpAmt.value = emp.dayPayRate;
+          }
+        }
+        calculate();
+      });
+    });
+
+    document.querySelectorAll(".day-pay-amount").forEach(input => {
+      input.addEventListener("input", calculate);
+    });
 
     function cleanTimeEntry(value) {
       let text = String(value || "")
@@ -1544,12 +1880,62 @@
       return [
         employee.name || "",
         employee.employeeId || "",
+        employee.department || "",
         employee.location || ""
       ].join(" ").toLowerCase();
     }
 
     function closeEmployeeSearchResults() {
       $("employeeSearchResults").classList.add("hidden");
+    }
+
+    function deptMeta(dept) {
+      const map = {
+        "Security": {
+          label: "Security",
+          fg: "#1e40af",
+          bg: "#dbeafe",
+          border: "#93c5fd"
+        },
+        "PKD - Price King Distribution": {
+          label: "PKD – Price King Distribution",
+          fg: "#065f46",
+          bg: "#d1fae5",
+          border: "#6ee7b7"
+        },
+        "J's Outlet": {
+          label: "J's Outlet",
+          fg: "#5b21b6",
+          bg: "#ede9fe",
+          border: "#c4b5fd"
+        }
+      };
+      return map[dept] || {
+        label: dept || "Unassigned",
+        fg: "#374151",
+        bg: "#f1f5f9",
+        border: "#cbd5e1"
+      };
+    }
+
+    function showDeptBadge(dept) {
+      const badge = $("deptBadge");
+      if (!badge) return;
+      if (!dept) {
+        badge.classList.add("hidden");
+        return;
+      }
+      const meta = deptMeta(dept);
+      badge.textContent = meta.label;
+      badge.style.background = meta.bg;
+      badge.style.color = meta.fg;
+      badge.style.borderColor = meta.border;
+      badge.classList.remove("hidden");
+    }
+
+    function hideDeptBadge() {
+      const badge = $("deptBadge");
+      if (badge) badge.classList.add("hidden");
     }
 
     function selectEmployeeFromSearch(employeeId) {
@@ -1566,6 +1952,7 @@
       $("rateDisplay").textContent =
         money(employee.hourlyRate);
 
+      showDeptBadge(employee.department || "");
       calculate();
     }
 
@@ -1603,6 +1990,11 @@
               }
               · ${money(employee.hourlyRate)}/hr
               ${
+                employee.department
+                  ? ` · ${escapeHtml(employee.department)}`
+                  : ""
+              }
+              ${
                 employee.location
                   ? ` · ${escapeHtml(employee.location)}`
                   : ""
@@ -1638,6 +2030,7 @@
     $("employeeSearch").addEventListener("input", () => {
       $("employeeSelect").value = "";
       $("rateDisplay").textContent = money(0);
+      hideDeptBadge();
       calculate();
 
       renderEmployeeSearchResults(
@@ -1680,15 +2073,24 @@
       $("employeeSelect").value = "";
       $("employeeSearch").value = "";
       $("rateDisplay").textContent = money(0);
+      hideDeptBadge();
 
       document
         .querySelectorAll("#timeRows input")
         .forEach(input => {
-          input.value =
-            input.classList.contains("break")
-              ? "0"
-              : "";
+          if (input.classList.contains("day-pay-check")) {
+            input.checked = false;
+          } else {
+            input.value =
+              input.classList.contains("break")
+                ? "0"
+                : "";
+          }
         });
+
+      document
+        .querySelectorAll("#timeRows tr")
+        .forEach(row => row.classList.remove("is-day-pay"));
 
       document
         .querySelectorAll(".clock-in-period")
@@ -1726,32 +2128,43 @@
     }
 
     function calculate() {
-      let total = 0;
+      let totalHours = 0;
+      let totalDayPay = 0;
 
       document
         .querySelectorAll("#timeRows tr")
         .forEach(row => {
-          const hours = hoursBetween(
-            row.querySelector(".clock-in").value,
-            row.querySelector(".clock-out").value,
-            row.querySelector(".break").value,
-            row.querySelector(".clock-in-period").value,
-            row.querySelector(".clock-out-period").value
-          );
+          const isDayPay = row.querySelector(".day-pay-check").checked;
 
-          row.querySelector(".hours").textContent =
-            hours.toFixed(2);
-
-          total += hours;
+          if (isDayPay) {
+            const amt = Number(row.querySelector(".day-pay-amount").value || 0);
+            row.querySelector(".hours-display").textContent = "—";
+            totalDayPay += amt;
+          } else {
+            const hours = hoursBetween(
+              row.querySelector(".clock-in").value,
+              row.querySelector(".clock-out").value,
+              row.querySelector(".break").value,
+              row.querySelector(".clock-in-period").value,
+              row.querySelector(".clock-out-period").value
+            );
+            row.querySelector(".hours-display").textContent = hours.toFixed(2);
+            totalHours += hours;
+          }
         });
 
-      $("totalHours").textContent = total.toFixed(2);
+      const hourlyPay = totalHours * Number(selectedEmployee()?.hourlyRate || 0);
+      const grossPay = hourlyPay + totalDayPay;
 
-      $("grossPay").textContent = money(
-        total * Number(selectedEmployee()?.hourlyRate || 0)
-      );
+      $("totalHours").textContent = totalHours.toFixed(2);
 
-      return total;
+      const wrap = $("dayPayTotalWrap");
+      wrap.style.display = totalDayPay > 0 ? "" : "none";
+      $("dayPayTotal").textContent = money(totalDayPay);
+
+      $("grossPay").textContent = money(grossPay);
+
+      return { totalHours, totalDayPay, grossPay };
     }
 
     document
@@ -1792,6 +2205,7 @@
       $("rateDisplay").textContent =
         money(employee?.hourlyRate);
 
+      showDeptBadge(employee?.department || "");
       calculate();
     });
 
@@ -1809,12 +2223,13 @@
         payroll: "Weekly Payroll",
         employees: "Employee Setup",
         summary: "Employee Summary",
-        history: "Payroll History"
+        history: "Payroll History",
+        security: "Security Monthly Report"
       };
 
-      $("pageTitle").textContent = titles[tab];
+      $("pageTitle").textContent = titles[tab] || tab;
 
-      ["payroll", "employees", "summary", "history"]
+      ["payroll", "employees", "summary", "history", "security"]
         .forEach(section => {
           $(`${section}Section`).classList.toggle(
             "hidden",
@@ -1828,6 +2243,9 @@
           button.dataset.tab === tab
         );
       });
+
+      if (tab === "summary") renderSummary();
+      if (tab === "security") renderSecurityReport();
     }
 
     document.querySelectorAll("nav button").forEach(button => {
@@ -1869,8 +2287,10 @@
       $("empNumber").value = employee.employeeId || "";
       $("empEmail").value = employee.email || "";
       $("empPhone").value = employee.phone || "";
+      $("empDepartment").value = employee.department || "";
       $("empLocation").value = employee.location || "";
       $("empRate").value = employee.hourlyRate ?? "";
+      $("empDayRate").value = employee.dayPayRate ?? "";
       $("empNotes").value = employee.notes || "";
 
       $("employeeFormTitle").textContent = "Edit employee";
@@ -1890,6 +2310,41 @@
         renderEmployees();
       }
     );
+
+    function renderDepartmentCounts(employeeEntries) {
+      const counts = {};
+
+      employeeEntries.forEach(([, employee]) => {
+        const dept =
+          String(employee.department || "").trim() ||
+          "Unassigned";
+
+        counts[dept] = (counts[dept] || 0) + 1;
+      });
+
+      const departments = Object.entries(counts).sort(
+        (a, b) => {
+          if (a[0] === "Unassigned") return 1;
+          if (b[0] === "Unassigned") return -1;
+          return a[0].localeCompare(b[0]);
+        }
+      );
+
+      $("departmentCounts").innerHTML = departments.length
+        ? departments.map(([dept, count]) => `
+          <span class="location-count-item">
+            ${escapeHtml(dept)}
+            <span class="location-count-number">
+              ${count}
+            </span>
+          </span>
+        `).join("")
+        : `
+          <span class="location-count-item">
+            No employees yet
+          </span>
+        `;
+    }
 
     function renderLocationCounts(employeeEntries) {
       const counts = {};
@@ -1968,6 +2423,7 @@
         toggleBtn.classList.toggle("on", showInactive);
       }
 
+      renderDepartmentCounts(activeEntries);
       renderLocationCounts(activeEntries);
 
       // Dropdown only shows active employees
@@ -1993,6 +2449,7 @@
         $("employeeSelect").value = "";
         $("employeeSearch").value = "";
         $("rateDisplay").textContent = money(0);
+        hideDeptBadge();
         calculate();
       }
 
@@ -2017,6 +2474,11 @@
                   employee.employeeId || "No employee ID"
                 )}
                 · ${money(employee.hourlyRate)}/hr
+                ${
+                  employee.department
+                    ? ` · <strong style="color:#e85d04">${escapeHtml(employee.department)}</strong>`
+                    : ""
+                }
                 ${
                   employee.location
                     ? ` · ${escapeHtml(employee.location)}`
@@ -2131,13 +2593,19 @@
           return;
         }
 
+        const dayPayRateVal = Number($("empDayRate").value);
+
         const employeeData = {
           name,
           employeeId: $("empNumber").value.trim(),
           email: $("empEmail").value.trim(),
           phone: $("empPhone").value.trim(),
+          department: $("empDepartment").value,
           location: $("empLocation").value.trim(),
           hourlyRate,
+          dayPayRate: Number.isFinite(dayPayRateVal) && dayPayRateVal > 0
+            ? dayPayRateVal
+            : null,
           notes: $("empNotes").value.trim(),
           active: editingEmployeeId
             ? (employees[editingEmployeeId]?.active !== false)
@@ -2316,6 +2784,8 @@
       $("rateDisplay").textContent =
         money(record.hourlyRate || employee?.hourlyRate || 0);
 
+      showDeptBadge(employee?.department || "");
+
       $("payrollStartDate").value =
         record.payrollStartDate || "";
 
@@ -2330,26 +2800,38 @@
           const day = row.dataset.day;
           const time = record.times?.[day] || {};
 
-          const clockInDisplay =
-            firebaseTimeToDisplay(time.in);
+          if (time.dayPay) {
+            const chk = row.querySelector(".day-pay-check");
+            chk.checked = true;
+            row.classList.add("is-day-pay");
+            row.querySelector(".day-pay-amount").value =
+              time.dayPayAmount ?? "";
+          } else {
+            const chk = row.querySelector(".day-pay-check");
+            chk.checked = false;
+            row.classList.remove("is-day-pay");
 
-          const clockOutDisplay =
-            firebaseTimeToDisplay(time.out);
+            const clockInDisplay =
+              firebaseTimeToDisplay(time.in);
 
-          row.querySelector(".clock-in").value =
-            clockInDisplay.time;
+            const clockOutDisplay =
+              firebaseTimeToDisplay(time.out);
 
-          row.querySelector(".clock-in-period").value =
-            clockInDisplay.period;
+            row.querySelector(".clock-in").value =
+              clockInDisplay.time;
 
-          row.querySelector(".clock-out").value =
-            clockOutDisplay.time;
+            row.querySelector(".clock-in-period").value =
+              clockInDisplay.period;
 
-          row.querySelector(".clock-out-period").value =
-            clockOutDisplay.period;
+            row.querySelector(".clock-out").value =
+              clockOutDisplay.time;
 
-          row.querySelector(".break").value =
-            time.breakMinutes ?? 0;
+            row.querySelector(".clock-out-period").value =
+              clockOutDisplay.period;
+
+            row.querySelector(".break").value =
+              time.breakMinutes ?? 0;
+          }
         });
 
       calculate();
@@ -2368,7 +2850,7 @@
       "click",
       async () => {
         const employee = selectedEmployee();
-        const totalHours = calculate();
+        const { totalHours, totalDayPay, grossPay } = calculate();
 
         const payrollStartDate =
           $("payrollStartDate").value;
@@ -2393,8 +2875,8 @@
           return;
         }
 
-        if (totalHours <= 0) {
-          notice("Enter at least one work shift.");
+        if (totalHours <= 0 && totalDayPay <= 0) {
+          notice("Enter at least one work shift or day pay.");
           return;
         }
 
@@ -2405,44 +2887,53 @@
           .querySelectorAll("#timeRows tr")
           .forEach(row => {
             const day = row.dataset.day;
+            const isDayPay = row.querySelector(".day-pay-check").checked;
 
-            normalizeVisibleTimeInput(
-              row.querySelector(".clock-in")
-            );
-
-            normalizeVisibleTimeInput(
-              row.querySelector(".clock-out")
-            );
-
-            const clockIn =
-              timeToFirebaseValue(
-                row.querySelector(".clock-in").value,
-                row.querySelector(".clock-in-period").value
+            if (isDayPay) {
+              const dayPayAmount = Number(
+                row.querySelector(".day-pay-amount").value || 0
+              );
+              times[day] = { dayPay: true, dayPayAmount };
+              dayHours[day] = 0;
+            } else {
+              normalizeVisibleTimeInput(
+                row.querySelector(".clock-in")
               );
 
-            const clockOut =
-              timeToFirebaseValue(
+              normalizeVisibleTimeInput(
+                row.querySelector(".clock-out")
+              );
+
+              const clockIn =
+                timeToFirebaseValue(
+                  row.querySelector(".clock-in").value,
+                  row.querySelector(".clock-in-period").value
+                );
+
+              const clockOut =
+                timeToFirebaseValue(
+                  row.querySelector(".clock-out").value,
+                  row.querySelector(".clock-out-period").value
+                );
+
+              const breakMinutes = Number(
+                row.querySelector(".break").value || 0
+              );
+
+              times[day] = {
+                in: clockIn,
+                out: clockOut,
+                breakMinutes
+              };
+
+              dayHours[day] = hoursBetween(
+                row.querySelector(".clock-in").value,
                 row.querySelector(".clock-out").value,
+                breakMinutes,
+                row.querySelector(".clock-in-period").value,
                 row.querySelector(".clock-out-period").value
               );
-
-            const breakMinutes = Number(
-              row.querySelector(".break").value || 0
-            );
-
-            times[day] = {
-              in: clockIn,
-              out: clockOut,
-              breakMinutes
-            };
-
-            dayHours[day] = hoursBetween(
-              row.querySelector(".clock-in").value,
-              row.querySelector(".clock-out").value,
-              breakMinutes,
-              row.querySelector(".clock-in-period").value,
-              row.querySelector(".clock-out-period").value
-            );
+            }
           });
 
         const previousRecord =
@@ -2461,12 +2952,8 @@
           times,
           dayHours,
           totalHours: Number(totalHours.toFixed(2)),
-          grossPay: Number(
-            (
-              totalHours *
-              Number(employee.hourlyRate)
-            ).toFixed(2)
-          ),
+          totalDayPay: Number(totalDayPay.toFixed(2)),
+          grossPay: Number(grossPay.toFixed(2)),
           createdAt:
             previousRecord.createdAt ||
             new Date().toISOString(),
@@ -2538,6 +3025,7 @@
 
       const filterStart = $("historyFilterStart")?.value || "";
       const filterEnd = $("historyFilterEnd")?.value || "";
+      const deptFilter = $("historyDeptFilter")?.value || "";
 
       return historyArray().filter(row => {
         const rowStart = row.payrollStartDate || "";
@@ -2561,6 +3049,15 @@
             .toLowerCase();
 
           if (!haystack.includes(searchTerm)) return false;
+        }
+
+        if (deptFilter) {
+          const empDept = employees[row.employeeId]?.department || "";
+          if (deptFilter === "__unassigned__") {
+            if (empDept) return false;
+          } else {
+            if (empDept !== deptFilter) return false;
+          }
         }
 
         if (filterStart && rowEnd && rowEnd < filterStart) {
@@ -2621,10 +3118,16 @@
       renderHistory
     );
 
+    $("historyDeptFilter").addEventListener(
+      "change",
+      renderHistory
+    );
+
     $("historyFilterClear").addEventListener(
       "click",
       () => {
         $("historySearch").value = "";
+        $("historyDeptFilter").value = "";
         $("historyFilterStart").value = "";
         $("historyFilterEnd").value = "";
         renderHistory();
@@ -2652,8 +3155,8 @@
       $("historyRecordCount").textContent =
         `${rows.length} ${rows.length === 1 ? "record" : "records"}`;
 
-      $("historyRows").innerHTML = rows.length
-        ? rows.map(row => `
+      function historyRowHtml(row) {
+        return `
           <tr>
             <td>
               <input
@@ -2694,8 +3197,11 @@
               </div>
             </td>
           </tr>
-        `).join("")
-        : `
+        `;
+      }
+
+      if (!rows.length) {
+        $("historyRows").innerHTML = `
           <tr>
             <td colspan="8" class="empty">
               ${
@@ -2706,6 +3212,64 @@
             </td>
           </tr>
         `;
+      } else {
+        const DEPT_ORDER = [
+          "Security",
+          "PKD - Price King Distribution",
+          "J's Outlet",
+          ""
+        ];
+
+        const groups = {};
+        DEPT_ORDER.forEach(d => { groups[d] = []; });
+
+        rows.forEach(row => {
+          const dept = employees[row.employeeId]?.department || "";
+          if (groups[dept] !== undefined) {
+            groups[dept].push(row);
+          } else {
+            groups[""].push(row);
+          }
+        });
+
+        let html = "";
+
+        DEPT_ORDER.forEach(dept => {
+          const group = groups[dept];
+          if (!group.length) return;
+
+          const meta = deptMeta(dept);
+          const totalHrs = group.reduce(
+            (s, r) => s + Number(r.totalHours || 0), 0
+          );
+          const totalPay = group.reduce(
+            (s, r) => s + Number(r.grossPay || 0), 0
+          );
+          const count = group.length;
+
+          html += `
+            <tr class="dept-group-header" style="background:${meta.bg}">
+              <td colspan="8">
+                <span
+                  class="dept-group-pill"
+                  style="background:${meta.bg};color:${meta.fg};border-color:${meta.border}"
+                >${meta.label}</span>
+                <span class="dept-group-stats">
+                  ${count} ${count === 1 ? "record" : "records"}
+                  &nbsp;·&nbsp;
+                  ${totalHrs.toFixed(2)} hrs
+                  &nbsp;·&nbsp;
+                  ${money(totalPay)}
+                </span>
+              </td>
+            </tr>
+          `;
+
+          group.forEach(row => { html += historyRowHtml(row); });
+        });
+
+        $("historyRows").innerHTML = html;
+      }
 
       $("selectAllHistory").checked = false;
       $("selectAllHistoryTable").checked = false;
@@ -3083,6 +3647,289 @@
         })[character]
       );
     }
+
+    // ── Security Monthly Report ──────────────────────────
+
+    function securityRecords() {
+      return historyArray().filter(row => {
+        const dept = employees[row.employeeId]?.department || "";
+        return dept === "Security";
+      });
+    }
+
+    function groupByMonth(records) {
+      const months = {};
+      records.forEach(record => {
+        const date = record.payrollStartDate || record.weekEnding || "";
+        if (!date) return;
+        const monthKey = date.slice(0, 7);
+        if (!months[monthKey]) months[monthKey] = [];
+        months[monthKey].push(record);
+      });
+      return months;
+    }
+
+    function monthLabel(monthKey) {
+      const [year, month] = monthKey.split("-");
+      return new Date(Number(year), Number(month) - 1, 1)
+        .toLocaleString("default", { month: "long", year: "numeric" });
+    }
+
+    function securityTableBody(records) {
+      return records.map(r => `
+        <tr>
+          <td>${escapeHtml(r.employeeName || "")}</td>
+          <td>${r.payrollStartDate || ""}</td>
+          <td>${r.payrollEndDate || r.weekEnding || ""}</td>
+          <td>${Number(r.totalHours || 0).toFixed(2)}</td>
+          <td>${r.totalDayPay ? money(r.totalDayPay) : "—"}</td>
+          <td>${money(r.grossPay)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function renderSecurityReport() {
+      const records = securityRecords();
+      const byMonth = groupByMonth(records);
+      const monthKeys = Object.keys(byMonth).sort().reverse();
+
+      if (!monthKeys.length) {
+        $("securityMonthList").innerHTML =
+          '<p class="security-empty">No Security payroll records found. Save payroll for employees in the <strong>Security</strong> department to see monthly reports here.</p>';
+        return;
+      }
+
+      $("securityMonthList").innerHTML = monthKeys.map(monthKey => {
+        const mRecords = byMonth[monthKey];
+        const totalHours = mRecords.reduce((s, r) => s + Number(r.totalHours || 0), 0);
+        const totalDayPay = mRecords.reduce((s, r) => s + Number(r.totalDayPay || 0), 0);
+        const totalPay = mRecords.reduce((s, r) => s + Number(r.grossPay || 0), 0);
+        const empCount = new Set(mRecords.map(r => r.employeeId)).size;
+
+        return `
+          <div class="card security-month-card">
+            <div class="security-month-header" data-toggle-month="${monthKey}">
+              <div>
+                <h3 class="security-month-title">${monthLabel(monthKey)}</h3>
+                <div class="security-month-stats">
+                  <span><strong>${totalHours.toFixed(2)}</strong> hrs worked</span>
+                  ${totalDayPay > 0 ? `<span><strong>${money(totalDayPay)}</strong> day pay</span>` : ""}
+                  <span><strong>${money(totalPay)}</strong> total pay</span>
+                  <span><strong>${mRecords.length}</strong> ${mRecords.length === 1 ? "record" : "records"}</span>
+                  <span><strong>${empCount}</strong> ${empCount === 1 ? "employee" : "employees"}</span>
+                </div>
+              </div>
+              <div class="security-month-actions">
+                <button type="button" class="btn secondary" data-month-csv="${monthKey}" style="font-size:12px;padding:5px 10px">CSV</button>
+                <button type="button" class="btn secondary" data-month-pdf="${monthKey}" style="font-size:12px;padding:5px 10px">PDF</button>
+                <button type="button" class="security-expand-btn" data-toggle-month="${monthKey}">▼</button>
+              </div>
+            </div>
+            <div class="security-month-body hidden" id="sec-month-${monthKey}">
+              <table class="security-table">
+                <thead>
+                  <tr>
+                    <th>Employee</th>
+                    <th>Week Start</th>
+                    <th>Week End</th>
+                    <th>Hours</th>
+                    <th>Day Pay</th>
+                    <th>Total Pay</th>
+                  </tr>
+                </thead>
+                <tbody>${securityTableBody(mRecords)}</tbody>
+                <tfoot>
+                  <tr class="security-total-row">
+                    <td colspan="3">Month Total</td>
+                    <td>${totalHours.toFixed(2)}</td>
+                    <td>${totalDayPay > 0 ? money(totalDayPay) : "—"}</td>
+                    <td>${money(totalPay)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      document.querySelectorAll("[data-toggle-month]").forEach(el => {
+        el.addEventListener("click", e => {
+          e.stopPropagation();
+          const monthKey = el.dataset.toggleMonth;
+          const body = $(`sec-month-${monthKey}`);
+          const isOpen = !body.classList.contains("hidden");
+          body.classList.toggle("hidden", isOpen);
+          const header = document.querySelector(`.security-month-header[data-toggle-month="${monthKey}"]`);
+          if (header) header.classList.toggle("open", !isOpen);
+          const expBtn = document.querySelector(`.security-expand-btn[data-toggle-month="${monthKey}"]`);
+          if (expBtn) expBtn.textContent = isOpen ? "▼" : "▲";
+        });
+      });
+
+      document.querySelectorAll("[data-month-csv]").forEach(btn => {
+        btn.addEventListener("click", e => {
+          e.stopPropagation();
+          const mk = btn.dataset.monthCsv;
+          exportSecurityCsv(byMonth[mk], mk);
+        });
+      });
+
+      document.querySelectorAll("[data-month-pdf]").forEach(btn => {
+        btn.addEventListener("click", e => {
+          e.stopPropagation();
+          const mk = btn.dataset.monthPdf;
+          exportSecurityPdf(byMonth[mk], mk);
+        });
+      });
+    }
+
+    function securityCsvRows(records) {
+      const rows = records.map(r => [
+        r.employeeName || "",
+        r.payrollStartDate || "",
+        r.payrollEndDate || r.weekEnding || "",
+        Number(r.totalHours || 0).toFixed(2),
+        r.totalDayPay ? Number(r.totalDayPay).toFixed(2) : "0.00",
+        Number(r.grossPay || 0).toFixed(2)
+      ]);
+      const totalHours = records.reduce((s, r) => s + Number(r.totalHours || 0), 0);
+      const totalPay = records.reduce((s, r) => s + Number(r.grossPay || 0), 0);
+      rows.push(["TOTAL", "", "", totalHours.toFixed(2), "", totalPay.toFixed(2)]);
+      return rows;
+    }
+
+    function exportSecurityCsv(records, monthKey) {
+      const headers = ["Employee", "Week Start", "Week End", "Hours Worked", "Day Pay", "Total Pay"];
+      const rows = securityCsvRows(records);
+      const csv = [headers, ...rows]
+        .map(row => row.map(c => `"${String(c).replace(/"/g, '""')}"`).join(","))
+        .join("\n");
+      downloadBlob(csv, "text/csv", `security-${monthKey}.csv`);
+    }
+
+    function exportSecurityPdf(records, monthKey) {
+      const label = monthLabel(monthKey);
+      const totalHours = records.reduce((s, r) => s + Number(r.totalHours || 0), 0);
+      const totalPay = records.reduce((s, r) => s + Number(r.grossPay || 0), 0);
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(16);
+      doc.text(`Security Monthly Report — ${label}`, 14, 18);
+      doc.setFontSize(11);
+      doc.text(`Total Hours: ${totalHours.toFixed(2)}     Total Pay: ${money(totalPay)}`, 14, 27);
+      doc.autoTable({
+        startY: 34,
+        head: [["Employee", "Week Start", "Week End", "Hours", "Day Pay", "Total Pay"]],
+        body: [
+          ...records.map(r => [
+            r.employeeName || "",
+            r.payrollStartDate || "",
+            r.payrollEndDate || r.weekEnding || "",
+            Number(r.totalHours || 0).toFixed(2),
+            r.totalDayPay ? money(r.totalDayPay) : "—",
+            money(r.grossPay)
+          ]),
+          ["TOTAL", "", "", totalHours.toFixed(2), "", money(totalPay)]
+        ],
+        styles: { fontSize: 9 },
+        didParseCell: data => {
+          if (data.row.index === records.length) {
+            data.cell.styles.fontStyle = "bold";
+            data.cell.styles.fillColor = [248, 250, 252];
+          }
+        }
+      });
+      doc.save(`security-${monthKey}.pdf`);
+    }
+
+    function exportSecurityAllCsv() {
+      const records = securityRecords();
+      const byMonth = groupByMonth(records);
+      const monthKeys = Object.keys(byMonth).sort();
+      if (!monthKeys.length) { notice("No Security records to export."); return; }
+      const headers = ["Month", "Employee", "Week Start", "Week End", "Hours Worked", "Day Pay", "Total Pay"];
+      const allRows = [];
+      monthKeys.forEach(mk => {
+        const mRecords = byMonth[mk];
+        mRecords.forEach(r => {
+          allRows.push([
+            monthLabel(mk),
+            r.employeeName || "",
+            r.payrollStartDate || "",
+            r.payrollEndDate || r.weekEnding || "",
+            Number(r.totalHours || 0).toFixed(2),
+            r.totalDayPay ? Number(r.totalDayPay).toFixed(2) : "0.00",
+            Number(r.grossPay || 0).toFixed(2)
+          ]);
+        });
+        const th = mRecords.reduce((s, r) => s + Number(r.totalHours || 0), 0);
+        const tp = mRecords.reduce((s, r) => s + Number(r.grossPay || 0), 0);
+        allRows.push([`${monthLabel(mk)} TOTAL`, "", "", "", th.toFixed(2), "", tp.toFixed(2)]);
+        allRows.push([]);
+      });
+      const csv = [headers, ...allRows]
+        .map(row => row.map(c => `"${String(c ?? "").replace(/"/g, '""')}"`).join(","))
+        .join("\n");
+      downloadBlob(csv, "text/csv", "security-all-months.csv");
+    }
+
+    function exportSecurityAllPdf() {
+      const records = securityRecords();
+      const byMonth = groupByMonth(records);
+      const monthKeys = Object.keys(byMonth).sort();
+      if (!monthKeys.length) { notice("No Security records to export."); return; }
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      doc.setFontSize(18);
+      doc.text("Security Monthly Report — All Months", 14, 18);
+      let yPos = 28;
+      monthKeys.forEach((mk, idx) => {
+        const mRecords = byMonth[mk];
+        const totalHours = mRecords.reduce((s, r) => s + Number(r.totalHours || 0), 0);
+        const totalPay = mRecords.reduce((s, r) => s + Number(r.grossPay || 0), 0);
+        if (idx > 0) doc.addPage();
+        doc.setFontSize(13);
+        doc.text(monthLabel(mk), 14, idx === 0 ? yPos : 18);
+        doc.setFontSize(10);
+        doc.text(`Total Hours: ${totalHours.toFixed(2)}   Total Pay: ${money(totalPay)}`, 14, idx === 0 ? yPos + 7 : 26);
+        doc.autoTable({
+          startY: idx === 0 ? yPos + 13 : 32,
+          head: [["Employee", "Week Start", "Week End", "Hours", "Day Pay", "Total Pay"]],
+          body: [
+            ...mRecords.map(r => [
+              r.employeeName || "",
+              r.payrollStartDate || "",
+              r.payrollEndDate || r.weekEnding || "",
+              Number(r.totalHours || 0).toFixed(2),
+              r.totalDayPay ? money(r.totalDayPay) : "—",
+              money(r.grossPay)
+            ]),
+            ["TOTAL", "", "", totalHours.toFixed(2), "", money(totalPay)]
+          ],
+          styles: { fontSize: 9 },
+          didParseCell: data => {
+            if (data.row.index === mRecords.length) {
+              data.cell.styles.fontStyle = "bold";
+              data.cell.styles.fillColor = [248, 250, 252];
+            }
+          }
+        });
+      });
+      doc.save("security-all-months.pdf");
+    }
+
+    function downloadBlob(content, mimeType, filename) {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    $("securityCsvAll").addEventListener("click", exportSecurityAllCsv);
+    $("securityPdfAll").addEventListener("click", exportSecurityAllPdf);
   </script>
 </body>
 </html>
