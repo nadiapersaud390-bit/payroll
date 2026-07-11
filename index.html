@@ -98,7 +98,7 @@
 
     .top-grid {
       display: grid;
-      grid-template-columns: 2fr 1fr 1fr 1fr;
+      grid-template-columns: minmax(180px, 1fr) minmax(240px, 1.4fr) 1fr 1fr 1fr;
       gap: 18px;
       align-items: end;
       margin-bottom: 18px;
@@ -1155,6 +1155,10 @@
         grid-template-columns: 1fr 1fr;
       }
 
+      .employee-picker {
+        grid-column: span 1;
+      }
+
       .metric {
         grid-column: span 2;
       }
@@ -1309,6 +1313,14 @@
         </div>
 
         <div class="card top-grid">
+          <label>
+            Department
+            <select id="payrollDepartmentFilter">
+              <option value="">All departments</option>
+            </select>
+            <span id="departmentEmployeeCount" class="week-note">All active employees</span>
+          </label>
+
           <label class="employee-picker">
             Employee
             <input
@@ -2134,11 +2146,106 @@
       if (badge) badge.classList.add("hidden");
     }
 
+    function selectedPayrollDepartment() {
+      return $("payrollDepartmentFilter").value;
+    }
+
+    function employeeMatchesPayrollDepartment(employee) {
+      const selectedDepartment = selectedPayrollDepartment();
+
+      if (!selectedDepartment) {
+        return true;
+      }
+
+      if (selectedDepartment === "__unassigned__") {
+        return !String(employee.department || "").trim();
+      }
+
+      return String(employee.department || "").trim() === selectedDepartment;
+    }
+
+    function activeEmployeesForPayroll() {
+      return Object.entries(employees)
+        .filter(([, employee]) =>
+          employee.active !== false &&
+          employeeMatchesPayrollDepartment(employee)
+        )
+        .sort((a, b) =>
+          String(a[1].name || "").localeCompare(
+            String(b[1].name || "")
+          )
+        );
+    }
+
+    function renderPayrollDepartmentFilter() {
+      const filter = $("payrollDepartmentFilter");
+      const previousValue = filter.value;
+
+      const departments = [...new Set(
+        Object.values(employees)
+          .filter(employee => employee.active !== false)
+          .map(employee => String(employee.department || "").trim())
+          .filter(Boolean)
+      )].sort((a, b) => a.localeCompare(b));
+
+      const hasUnassigned = Object.values(employees).some(employee =>
+        employee.active !== false &&
+        !String(employee.department || "").trim()
+      );
+
+      filter.innerHTML =
+        '<option value="">All departments</option>' +
+        departments.map(department => `
+          <option value="${escapeHtml(department)}">
+            ${escapeHtml(department)}
+          </option>
+        `).join("") +
+        (hasUnassigned
+          ? '<option value="__unassigned__">Unassigned</option>'
+          : '');
+
+      const availableValues = [...filter.options].map(option => option.value);
+      filter.value = availableValues.includes(previousValue)
+        ? previousValue
+        : "";
+
+      updatePayrollEmployeeOptions();
+    }
+
+    function updatePayrollEmployeeOptions() {
+      const selectedEmployeeId = $("employeeSelect").value;
+      const entries = activeEmployeesForPayroll();
+
+      $("employeeSelect").innerHTML =
+        '<option value="">Select employee</option>' +
+        entries.map(([id, employee]) => `
+          <option value="${id}">
+            ${escapeHtml(employee.name)} — ${money(employee.hourlyRate)}/hr
+          </option>
+        `).join("");
+
+      const selectedStillMatches = entries.some(([id]) => id === selectedEmployeeId);
+
+      if (selectedStillMatches) {
+        $("employeeSelect").value = selectedEmployeeId;
+      }
+
+      const count = entries.length;
+      $("departmentEmployeeCount").textContent = selectedPayrollDepartment()
+        ? `${count} active ${count === 1 ? "employee" : "employees"} in this department`
+        : `${count} active ${count === 1 ? "employee" : "employees"}`;
+    }
+
     function selectEmployeeFromSearch(employeeId) {
       const employee = employees[employeeId];
 
       if (!employee) {
         return;
+      }
+
+      if (!employeeMatchesPayrollDepartment(employee)) {
+        $("payrollDepartmentFilter").value = employee.department || "__unassigned__";
+        updatePayrollEmployeeOptions();
       }
 
       $("employeeSelect").value = employeeId;
@@ -2158,6 +2265,7 @@
       const matches = Object.entries(employees)
         .filter(([, employee]) => {
           if (employee.active === false) return false;
+          if (!employeeMatchesPayrollDepartment(employee)) return false;
           return !normalizedQuery ||
             employeeSearchText(employee).includes(
               normalizedQuery
@@ -2217,6 +2325,21 @@
         });
     }
 
+    $("payrollDepartmentFilter").addEventListener("change", () => {
+      const employee = selectedEmployee();
+
+      if (employee && !employeeMatchesPayrollDepartment(employee)) {
+        $("employeeSelect").value = "";
+        $("employeeSearch").value = "";
+        $("rateDisplay").textContent = money(0);
+        hideDeptBadge();
+        calculate();
+      }
+
+      updatePayrollEmployeeOptions();
+      closeEmployeeSearchResults();
+    });
+
     $("employeeSearch").addEventListener("focus", () => {
       renderEmployeeSearchResults(
         $("employeeSearch").value
@@ -2266,6 +2389,8 @@
     });
 
     function clearPayrollForm() {
+      $("payrollDepartmentFilter").value = "";
+      updatePayrollEmployeeOptions();
       $("employeeSelect").value = "";
       $("employeeSearch").value = "";
       $("rateDisplay").textContent = money(0);
@@ -2622,19 +2747,12 @@
       renderDepartmentCounts(activeEntries);
       renderLocationCounts(activeEntries);
 
-      // Dropdown only shows active employees
-      $("employeeSelect").innerHTML =
-        '<option value="">Select employee</option>' +
-        activeEntries.map(([id, employee]) => `
-          <option value="${id}">
-            ${escapeHtml(employee.name)} —
-            ${money(employee.hourlyRate)}/hr
-          </option>
-        `).join("");
+      renderPayrollDepartmentFilter();
 
       const selectedIsActive =
         employees[selectedEmployeeId] &&
-        employees[selectedEmployeeId].active !== false;
+        employees[selectedEmployeeId].active !== false &&
+        employeeMatchesPayrollDepartment(employees[selectedEmployeeId]);
 
       if (selectedIsActive) {
         $("employeeSelect").value = selectedEmployeeId;
@@ -2963,14 +3081,17 @@
 
       editingPayrollId = payrollId;
 
-      $("employeeSelect").value = record.employeeId || "";
-
       const employee =
         employees[record.employeeId] ||
         {
           name: record.employeeName,
           hourlyRate: record.hourlyRate
         };
+
+      $("payrollDepartmentFilter").value =
+        employee?.department || "__unassigned__";
+      updatePayrollEmployeeOptions();
+      $("employeeSelect").value = record.employeeId || "";
 
       $("employeeSearch").value =
         employee?.name ||
