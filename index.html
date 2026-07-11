@@ -191,10 +191,42 @@
 
     .top-grid {
       display: grid;
-      grid-template-columns: minmax(180px, 1fr) minmax(240px, 1.4fr) 1fr 1fr 1fr;
+      grid-template-columns:
+        minmax(260px, 1.45fr)
+        minmax(180px, 1fr)
+        minmax(180px, 1fr)
+        minmax(180px, 1fr);
       gap: 18px;
-      align-items: end;
+      align-items: start;
       margin-bottom: 18px;
+    }
+
+    .top-grid > label,
+    .top-grid > .pay-mode-control {
+      min-width: 0;
+      align-self: start;
+    }
+
+    .top-grid > label {
+      display: grid;
+      grid-template-rows: 18px 44px 18px;
+      gap: 7px;
+      align-content: start;
+    }
+
+    .top-grid .field-label,
+    .pay-mode-label {
+      display: flex;
+      align-items: center;
+      min-height: 18px;
+      line-height: 18px;
+    }
+
+    .top-grid .week-note,
+    .top-grid .dept-badge,
+    .top-grid .pay-mode-rate {
+      min-height: 18px;
+      line-height: 18px;
     }
 
     .split {
@@ -244,7 +276,7 @@
       content: "⌄";
       position: absolute;
       right: 13px;
-      bottom: 12px;
+      top: 51px;
       color: #64748b;
       pointer-events: none;
       font-size: 18px;
@@ -324,8 +356,10 @@
 
     .pay-mode-control {
       display: grid;
+      grid-template-rows: auto 44px 18px;
       gap: 7px;
-      align-content: end;
+      align-content: start;
+      min-width: 0;
     }
 
     .pay-mode-label {
@@ -375,10 +409,12 @@
     }
 
     .pay-mode-rate {
-      font-size: 22px;
+      display: flex;
+      align-items: center;
+      font-size: 18px;
       font-weight: 800;
       color: #1e3a5f;
-      line-height: 1;
+      line-height: 18px;
     }
 
     .week-note {
@@ -434,6 +470,43 @@
       font-weight: 600;
       color: #475569;
       vertical-align: middle;
+    }
+
+    .history-week-header td {
+      padding: 16px 14px 8px;
+      border-bottom: 0;
+      background: white;
+    }
+
+    .history-week-card {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      padding: 11px 14px;
+      border: 2px solid #14213d;
+      border-radius: 10px;
+      background: #f8fafc;
+    }
+
+    .history-week-title {
+      font-size: 14px;
+      font-weight: 800;
+      color: #14213d;
+    }
+
+    .history-week-stats {
+      font-size: 12px;
+      font-weight: 700;
+      color: #64748b;
+    }
+
+    .history-week-spacer td {
+      height: 12px;
+      padding: 0;
+      border-bottom: 0;
+      background: white;
     }
 
     .payroll-edit-banner {
@@ -1243,7 +1316,7 @@
       margin: 0 0 8px;
     }
 
-    @media (max-width: 1100px) {
+    @media (max-width: 1180px) {
       .top-grid {
         grid-template-columns: 1fr 1fr;
       }
@@ -1414,7 +1487,7 @@
 
         <div class="card top-grid">
           <label class="employee-picker">
-            Employee
+            <span class="field-label">Employee</span>
             <input
               id="employeeSearch"
               type="text"
@@ -1435,13 +1508,13 @@
           </label>
 
           <label>
-            Payroll start date
+            <span class="field-label">Payroll start date</span>
             <input id="payrollStartDate" type="date">
             <span class="week-note">Week begins Saturday</span>
           </label>
 
           <label>
-            Payroll end date
+            <span class="field-label">Payroll end date</span>
             <input id="payrollEndDate" type="date">
             <span class="week-note">Week ends Friday</span>
           </label>
@@ -3605,52 +3678,120 @@
           ""
         ];
 
-        const groups = {};
-        DEPT_ORDER.forEach(d => { groups[d] = []; });
+        const weekGroups = {};
 
         rows.forEach(row => {
-          const dept = employees[row.employeeId]?.department || "";
-          if (groups[dept] !== undefined) {
-            groups[dept].push(row);
-          } else {
-            groups[""].push(row);
+          const start = row.payrollStartDate || "";
+          const end = row.payrollEndDate || row.weekEnding || "";
+          const key = `${start}|${end}`;
+
+          if (!weekGroups[key]) {
+            weekGroups[key] = {
+              start,
+              end,
+              rows: []
+            };
           }
+
+          weekGroups[key].rows.push(row);
         });
+
+        const orderedWeeks = Object.values(weekGroups).sort((a, b) =>
+          String(b.end || b.start).localeCompare(String(a.end || a.start))
+        );
 
         let html = "";
 
-        DEPT_ORDER.forEach(dept => {
-          const group = groups[dept];
-          if (!group.length) return;
+        orderedWeeks.forEach((week, weekIndex) => {
+          const weekRows = week.rows;
+          const weekHours = weekRows.reduce(
+            (sum, row) => sum + Number(row.totalHours || 0),
+            0
+          );
+          const weekPay = weekRows.reduce(
+            (sum, row) => sum + Number(row.grossPay || 0),
+            0
+          );
+          const periodLabel = week.start && week.end
+            ? `${week.start} to ${week.end}`
+            : week.end || week.start || "Date unavailable";
 
-          const meta = deptMeta(dept);
-          const totalHrs = group.reduce(
-            (s, r) => s + Number(r.totalHours || 0), 0
-          );
-          const totalPay = group.reduce(
-            (s, r) => s + Number(r.grossPay || 0), 0
-          );
-          const count = group.length;
+          if (weekIndex > 0) {
+            html += `
+              <tr class="history-week-spacer">
+                <td colspan="8"></td>
+              </tr>
+            `;
+          }
 
           html += `
-            <tr class="dept-group-header" style="background:${meta.bg}">
+            <tr class="history-week-header">
               <td colspan="8">
-                <span
-                  class="dept-group-pill"
-                  style="background:${meta.bg};color:${meta.fg};border-color:${meta.border}"
-                >${meta.label}</span>
-                <span class="dept-group-stats">
-                  ${count} ${count === 1 ? "record" : "records"}
-                  &nbsp;·&nbsp;
-                  ${totalHrs.toFixed(2)} hrs
-                  &nbsp;·&nbsp;
-                  ${money(totalPay)}
-                </span>
+                <div class="history-week-card">
+                  <span class="history-week-title">
+                    ${weekIndex === 0 ? "Newest week" : "Previous week"}: ${periodLabel}
+                  </span>
+                  <span class="history-week-stats">
+                    ${weekRows.length} ${weekRows.length === 1 ? "record" : "records"}
+                    &nbsp;·&nbsp;
+                    ${weekHours.toFixed(2)} hrs
+                    &nbsp;·&nbsp;
+                    ${money(weekPay)}
+                  </span>
+                </div>
               </td>
             </tr>
           `;
 
-          group.forEach(row => { html += historyRowHtml(row); });
+          const groups = {};
+          DEPT_ORDER.forEach(dept => { groups[dept] = []; });
+
+          weekRows.forEach(row => {
+            const dept = employees[row.employeeId]?.department || "";
+            if (groups[dept] !== undefined) {
+              groups[dept].push(row);
+            } else {
+              groups[""].push(row);
+            }
+          });
+
+          DEPT_ORDER.forEach(dept => {
+            const group = groups[dept];
+            if (!group.length) return;
+
+            const meta = deptMeta(dept);
+            const totalHrs = group.reduce(
+              (sum, row) => sum + Number(row.totalHours || 0),
+              0
+            );
+            const totalPay = group.reduce(
+              (sum, row) => sum + Number(row.grossPay || 0),
+              0
+            );
+            const count = group.length;
+
+            html += `
+              <tr class="dept-group-header" style="background:${meta.bg}">
+                <td colspan="8">
+                  <span
+                    class="dept-group-pill"
+                    style="background:${meta.bg};color:${meta.fg};border-color:${meta.border}"
+                  >${meta.label}</span>
+                  <span class="dept-group-stats">
+                    ${count} ${count === 1 ? "record" : "records"}
+                    &nbsp;·&nbsp;
+                    ${totalHrs.toFixed(2)} hrs
+                    &nbsp;·&nbsp;
+                    ${money(totalPay)}
+                  </span>
+                </td>
+              </tr>
+            `;
+
+            group.forEach(row => {
+              html += historyRowHtml(row);
+            });
+          });
         });
 
         $("historyRows").innerHTML = html;
