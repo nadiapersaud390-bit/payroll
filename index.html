@@ -37,14 +37,107 @@
       padding: 28px 18px;
     }
 
-    .brand {
-      font-size: 22px;
-      font-weight: 800;
-      margin: 0 10px 32px;
+    .brand-wrap {
+      position: relative;
+      margin: 0 0 24px;
     }
 
-    .brand span {
+    .brand {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: white;
+      padding: 8px 10px;
+      text-align: left;
+      border-radius: 10px;
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .brand:hover,
+    .brand[aria-expanded="true"] {
+      background: #25365d;
+    }
+
+    .brand-name {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .brand-name span {
       color: #fca311;
+    }
+
+    .brand-department {
+      display: block;
+      margin-top: 5px;
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 700;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .department-menu {
+      position: absolute;
+      top: calc(100% + 7px);
+      left: 0;
+      right: 0;
+      z-index: 100;
+      padding: 7px;
+      border: 1px solid #41547c;
+      border-radius: 12px;
+      background: #1d2d50;
+      box-shadow: 0 16px 30px rgba(0,0,0,.28);
+      max-height: 320px;
+      overflow-y: auto;
+    }
+
+    .department-menu-title {
+      padding: 7px 9px 6px;
+      color: #94a3b8;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .department-menu button {
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: #dbe4f0;
+      padding: 10px 9px;
+      text-align: left;
+      border-radius: 8px;
+      cursor: pointer;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .department-menu button:hover,
+    .department-menu button.active {
+      background: #30446f;
+      color: white;
+    }
+
+    .department-context {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin-top: 7px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: #e8eef8;
+      color: #334155;
+      font-size: 12px;
+      font-weight: 800;
     }
 
     nav {
@@ -1278,7 +1371,13 @@
 <body>
   <div class="app">
     <aside>
-      <div class="brand">Payroll<span>Manager</span></div>
+      <div class="brand-wrap">
+        <button id="brandDepartmentButton" class="brand" type="button" aria-expanded="false">
+          <span class="brand-name">Payroll<span>Manager</span><span aria-hidden="true">⌄</span></span>
+          <span id="brandDepartmentLabel" class="brand-department">All departments</span>
+        </button>
+        <div id="departmentMenu" class="department-menu hidden"></div>
+      </div>
 
       <nav>
         <button data-tab="payroll" class="active">Weekly Payroll</button>
@@ -1293,6 +1392,7 @@
       <header>
         <h1 id="pageTitle">Weekly Payroll</h1>
         <p>Realtime payroll records powered by Firebase.</p>
+        <span id="departmentContext" class="department-context">Viewing all departments</span>
       </header>
 
       <div id="notice" class="notice hidden"></div>
@@ -1313,14 +1413,6 @@
         </div>
 
         <div class="card top-grid">
-          <label>
-            Department
-            <select id="payrollDepartmentFilter">
-              <option value="">All departments</option>
-            </select>
-            <span id="departmentEmployeeCount" class="week-note">All active employees</span>
-          </label>
-
           <label class="employee-picker">
             Employee
             <input
@@ -1624,17 +1716,6 @@
           </label>
 
           <label>
-            Department
-            <select id="historyDeptFilter">
-              <option value="">All departments</option>
-              <option value="Security">Security</option>
-              <option value="PKD - Price King Distribution">PKD - Price King Distribution</option>
-              <option value="J's Outlet">J's Outlet</option>
-              <option value="__unassigned__">Unassigned</option>
-            </select>
-          </label>
-
-          <label>
             From date
             <input id="historyFilterStart" type="date">
           </label>
@@ -1799,6 +1880,7 @@
     let editingPayrollId = "";
     let showInactive = false;
     let activeHistoryView = "current";
+    let activeDepartmentFilter = "";
 
     const $ = id => document.getElementById(id);
 
@@ -1839,6 +1921,7 @@
     }
 
     setCurrentPayrollWeek();
+    renderDepartmentMenu();
 
     $("payrollStartDate").addEventListener("change", () => {
       const startValue = $("payrollStartDate").value;
@@ -2147,105 +2230,115 @@
     }
 
     function selectedPayrollDepartment() {
-      return $("payrollDepartmentFilter").value;
+      return activeDepartmentFilter;
     }
 
     function employeeMatchesPayrollDepartment(employee) {
-      const selectedDepartment = selectedPayrollDepartment();
-
-      if (!selectedDepartment) {
-        return true;
-      }
-
+      const selectedDepartment = activeDepartmentFilter;
+      if (!selectedDepartment) return true;
       if (selectedDepartment === "__unassigned__") {
         return !String(employee.department || "").trim();
       }
-
       return String(employee.department || "").trim() === selectedDepartment;
+    }
+
+    function recordMatchesActiveDepartment(row) {
+      if (!activeDepartmentFilter) return true;
+      const department = String(
+        employees[row.employeeId]?.department || row.department || ""
+      ).trim();
+      return activeDepartmentFilter === "__unassigned__"
+        ? !department
+        : department === activeDepartmentFilter;
     }
 
     function activeEmployeesForPayroll() {
       return Object.entries(employees)
-        .filter(([, employee]) =>
-          employee.active !== false &&
-          employeeMatchesPayrollDepartment(employee)
-        )
-        .sort((a, b) =>
-          String(a[1].name || "").localeCompare(
-            String(b[1].name || "")
-          )
-        );
+        .filter(([, employee]) => employee.active !== false && employeeMatchesPayrollDepartment(employee))
+        .sort((a, b) => String(a[1].name || "").localeCompare(String(b[1].name || "")));
     }
 
-    function renderPayrollDepartmentFilter() {
-      const filter = $("payrollDepartmentFilter");
-      const previousValue = filter.value;
+    function departmentDisplayName(value) {
+      return value === "__unassigned__" ? "Unassigned" : (value || "All departments");
+    }
 
+    function renderDepartmentMenu() {
       const departments = [...new Set(
         Object.values(employees)
-          .filter(employee => employee.active !== false)
           .map(employee => String(employee.department || "").trim())
           .filter(Boolean)
       )].sort((a, b) => a.localeCompare(b));
+      const hasUnassigned = Object.values(employees).some(employee => !String(employee.department || "").trim());
+      const values = ["", ...departments, ...(hasUnassigned ? ["__unassigned__"] : [])];
+      if (!values.includes(activeDepartmentFilter)) activeDepartmentFilter = "";
 
-      const hasUnassigned = Object.values(employees).some(employee =>
-        employee.active !== false &&
-        !String(employee.department || "").trim()
-      );
+      $("departmentMenu").innerHTML = `
+        <div class="department-menu-title">Choose department</div>
+        ${values.map(value => `
+          <button type="button" data-global-department="${escapeHtml(value)}" class="${value === activeDepartmentFilter ? "active" : ""}">
+            ${escapeHtml(departmentDisplayName(value))}
+          </button>
+        `).join("")}
+      `;
 
-      filter.innerHTML =
-        '<option value="">All departments</option>' +
-        departments.map(department => `
-          <option value="${escapeHtml(department)}">
-            ${escapeHtml(department)}
-          </option>
-        `).join("") +
-        (hasUnassigned
-          ? '<option value="__unassigned__">Unassigned</option>'
-          : '');
+      document.querySelectorAll("[data-global-department]").forEach(button => {
+        button.addEventListener("click", () => setActiveDepartment(button.dataset.globalDepartment));
+      });
 
-      const availableValues = [...filter.options].map(option => option.value);
-      filter.value = availableValues.includes(previousValue)
-        ? previousValue
-        : "";
+      const label = departmentDisplayName(activeDepartmentFilter);
+      $("brandDepartmentLabel").textContent = label;
+      $("departmentContext").textContent = activeDepartmentFilter
+        ? `Viewing ${label} only`
+        : "Viewing all departments";
+    }
 
+    function closeDepartmentMenu() {
+      $("departmentMenu").classList.add("hidden");
+      $("brandDepartmentButton").setAttribute("aria-expanded", "false");
+    }
+
+    function setActiveDepartment(value) {
+      activeDepartmentFilter = value || "";
+      closeDepartmentMenu();
+
+      const selected = selectedEmployee();
+      if (selected && !employeeMatchesPayrollDepartment(selected)) {
+        $("employeeSelect").value = "";
+        $("employeeSearch").value = "";
+        $("rateDisplay").textContent = money(0);
+        hideDeptBadge();
+        calculate();
+      }
+
+      renderDepartmentMenu();
       updatePayrollEmployeeOptions();
+      renderEmployees();
+      renderHistory();
+      renderSummary();
+      if (!$('securitySection').classList.contains('hidden')) renderSecurityReport();
     }
 
     function updatePayrollEmployeeOptions() {
       const selectedEmployeeId = $("employeeSelect").value;
       const entries = activeEmployeesForPayroll();
-
-      $("employeeSelect").innerHTML =
-        '<option value="">Select employee</option>' +
-        entries.map(([id, employee]) => `
-          <option value="${id}">
-            ${escapeHtml(employee.name)} — ${money(employee.hourlyRate)}/hr
-          </option>
-        `).join("");
-
-      const selectedStillMatches = entries.some(([id]) => id === selectedEmployeeId);
-
-      if (selectedStillMatches) {
-        $("employeeSelect").value = selectedEmployeeId;
-      }
-
-      const count = entries.length;
-      $("departmentEmployeeCount").textContent = selectedPayrollDepartment()
-        ? `${count} active ${count === 1 ? "employee" : "employees"} in this department`
-        : `${count} active ${count === 1 ? "employee" : "employees"}`;
+      $("employeeSelect").innerHTML = '<option value="">Select employee</option>' +
+        entries.map(([id, employee]) => `<option value="${id}">${escapeHtml(employee.name)} — ${money(employee.hourlyRate)}/hr</option>`).join("");
+      if (entries.some(([id]) => id === selectedEmployeeId)) $("employeeSelect").value = selectedEmployeeId;
     }
+
+    $("brandDepartmentButton").addEventListener("click", event => {
+      event.stopPropagation();
+      const menu = $("departmentMenu");
+      const opening = menu.classList.contains("hidden");
+      menu.classList.toggle("hidden", !opening);
+      $("brandDepartmentButton").setAttribute("aria-expanded", String(opening));
+    });
 
     function selectEmployeeFromSearch(employeeId) {
       const employee = employees[employeeId];
 
       if (!employee) {
         return;
-      }
-
-      if (!employeeMatchesPayrollDepartment(employee)) {
-        $("payrollDepartmentFilter").value = employee.department || "__unassigned__";
-        updatePayrollEmployeeOptions();
       }
 
       $("employeeSelect").value = employeeId;
@@ -2325,21 +2418,6 @@
         });
     }
 
-    $("payrollDepartmentFilter").addEventListener("change", () => {
-      const employee = selectedEmployee();
-
-      if (employee && !employeeMatchesPayrollDepartment(employee)) {
-        $("employeeSelect").value = "";
-        $("employeeSearch").value = "";
-        $("rateDisplay").textContent = money(0);
-        hideDeptBadge();
-        calculate();
-      }
-
-      updatePayrollEmployeeOptions();
-      closeEmployeeSearchResults();
-    });
-
     $("employeeSearch").addEventListener("focus", () => {
       renderEmployeeSearchResults(
         $("employeeSearch").value
@@ -2383,13 +2461,11 @@
     );
 
     document.addEventListener("click", event => {
-      if (!event.target.closest(".employee-picker")) {
-        closeEmployeeSearchResults();
-      }
+      if (!event.target.closest(".employee-picker")) closeEmployeeSearchResults();
+      if (!event.target.closest(".brand-wrap")) closeDepartmentMenu();
     });
 
     function clearPayrollForm() {
-      $("payrollDepartmentFilter").value = "";
       updatePayrollEmployeeOptions();
       $("employeeSelect").value = "";
       $("employeeSearch").value = "";
@@ -2721,33 +2797,34 @@
       const activeEntries =
         allEntries.filter(([, e]) => e.active !== false);
 
+      const departmentEntries = allEntries.filter(([, employee]) => employeeMatchesPayrollDepartment(employee));
       const visibleEntries = showInactive
-        ? allEntries
-        : activeEntries;
+        ? departmentEntries
+        : departmentEntries.filter(([, employee]) => employee.active !== false);
 
       const archivedCount =
         allEntries.length - activeEntries.length;
 
+      const visibleActiveCount = departmentEntries.filter(([, employee]) => employee.active !== false).length;
+      const visibleArchivedCount = departmentEntries.length - visibleActiveCount;
       $("employeeCount").textContent =
-        `${activeEntries.length} ${
-          activeEntries.length === 1
-            ? "employee"
-            : "employees"
-        }${archivedCount ? ` · ${archivedCount} archived` : ""}`;
+        `${visibleActiveCount} ${visibleActiveCount === 1 ? "employee" : "employees"}` +
+        (visibleArchivedCount ? ` · ${visibleArchivedCount} archived` : "");
 
       // Update filter button label
       const toggleBtn = $("toggleInactiveBtn");
       if (toggleBtn) {
         toggleBtn.textContent = showInactive
           ? "Hide archived"
-          : `Show archived${archivedCount ? ` (${archivedCount})` : ""}`;
+          : `Show archived${visibleArchivedCount ? ` (${visibleArchivedCount})` : ""}`;
         toggleBtn.classList.toggle("on", showInactive);
       }
 
-      renderDepartmentCounts(activeEntries);
-      renderLocationCounts(activeEntries);
-
-      renderPayrollDepartmentFilter();
+      const contextActiveEntries = departmentEntries.filter(([, employee]) => employee.active !== false);
+      renderDepartmentCounts(contextActiveEntries);
+      renderLocationCounts(contextActiveEntries);
+      renderDepartmentMenu();
+      updatePayrollEmployeeOptions();
 
       const selectedIsActive =
         employees[selectedEmployeeId] &&
@@ -3088,9 +3165,11 @@
           hourlyRate: record.hourlyRate
         };
 
-      $("payrollDepartmentFilter").value =
-        employee?.department || "__unassigned__";
-      updatePayrollEmployeeOptions();
+      if (!employeeMatchesPayrollDepartment(employee)) {
+        activeDepartmentFilter = employee?.department || "__unassigned__";
+        renderDepartmentMenu();
+        updatePayrollEmployeeOptions();
+      }
       $("employeeSelect").value = record.employeeId || "";
 
       $("employeeSearch").value =
@@ -3346,7 +3425,6 @@
 
       const filterStart = $("historyFilterStart")?.value || "";
       const filterEnd = $("historyFilterEnd")?.value || "";
-      const deptFilter = $("historyDeptFilter")?.value || "";
 
       return historyArray().filter(row => {
         const rowStart = row.payrollStartDate || "";
@@ -3364,21 +3442,13 @@
           : !isCurrent;
 
         if (!matchesView) return false;
+        if (!recordMatchesActiveDepartment(row)) return false;
 
         if (searchTerm) {
           const haystack = `${row.employeeName || ""} ${row.employeeNumber || ""}`
             .toLowerCase();
 
           if (!haystack.includes(searchTerm)) return false;
-        }
-
-        if (deptFilter) {
-          const empDept = employees[row.employeeId]?.department || "";
-          if (deptFilter === "__unassigned__") {
-            if (empDept) return false;
-          } else {
-            if (empDept !== deptFilter) return false;
-          }
         }
 
         if (filterStart && rowEnd && rowEnd < filterStart) {
@@ -3439,16 +3509,10 @@
       renderHistory
     );
 
-    $("historyDeptFilter").addEventListener(
-      "change",
-      renderHistory
-    );
-
     $("historyFilterClear").addEventListener(
       "click",
       () => {
         $("historySearch").value = "";
-        $("historyDeptFilter").value = "";
         $("historyFilterStart").value = "";
         $("historyFilterEnd").value = "";
         renderHistory();
@@ -3700,7 +3764,7 @@
     function summaryArray() {
       const summary = {};
 
-      historyArray().forEach(row => {
+      historyArray().filter(recordMatchesActiveDepartment).forEach(row => {
         if (!summary[row.employeeId]) {
           summary[row.employeeId] = {
             employeeName: row.employeeName,
@@ -3717,8 +3781,9 @@
           Number(row.grossPay || 0);
       });
 
-      Object.entries(employees).forEach(
-        ([id, employee]) => {
+      Object.entries(employees)
+        .filter(([, employee]) => employeeMatchesPayrollDepartment(employee))
+        .forEach(([id, employee]) => {
           if (!summary[id]) {
             summary[id] = {
               employeeName: employee.name,
