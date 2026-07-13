@@ -1595,6 +1595,32 @@
     .profile-field { padding:14px; border:1px solid #e5eaf1; border-radius:12px; background:#fbfcfe; }
     .profile-field span { display:block; color:#64748b; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
     .profile-field strong { display:block; margin-top:6px; color:#14213d; overflow-wrap:anywhere; }
+    .profile-stat-button { width:100%; border:1px solid #dbe4f0; border-radius:12px; background:linear-gradient(180deg,#ffffff 0%,#f8fafc 100%); padding:14px; text-align:left; cursor:pointer; transition:transform .15s,border-color .15s,box-shadow .15s; font:inherit; color:inherit; }
+    .profile-stat-button:hover { transform:translateY(-1px); border-color:#fca311; box-shadow:0 8px 20px rgba(20,33,61,.08); }
+    .profile-stat-button span { display:block; color:#64748b; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; }
+    .profile-stat-button strong { display:block; margin-top:6px; color:#14213d; font-size:20px; }
+    .profile-stat-button small { display:block; margin-top:5px; color:#64748b; font-size:11px; font-weight:700; }
+    .employee-payroll-breakdown { margin-top:20px; border-top:1px solid #e5eaf1; padding-top:18px; }
+    .employee-payroll-breakdown.hidden { display:none; }
+    .employee-payroll-breakdown-header { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
+    .employee-payroll-breakdown-header h3 { margin:0; font-size:18px; }
+    .employee-payroll-breakdown-header p { margin:4px 0 0; color:#64748b; font-size:12px; }
+    .employee-month-card { border:1px solid #e2e8f0; border-radius:14px; overflow:hidden; margin-bottom:12px; background:white; }
+    .employee-month-summary { width:100%; border:0; background:#f8fafc; padding:14px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px; cursor:pointer; text-align:left; font:inherit; }
+    .employee-month-summary:hover { background:#f1f5f9; }
+    .employee-month-summary-main strong { display:block; color:#14213d; font-size:14px; }
+    .employee-month-summary-main span { display:block; color:#64748b; font-size:12px; margin-top:3px; }
+    .employee-month-summary-total { text-align:right; }
+    .employee-month-summary-total strong { display:block; color:#14213d; }
+    .employee-month-summary-total span { display:block; color:#64748b; font-size:11px; margin-top:3px; }
+    .employee-month-weeks { padding:0 14px 14px; }
+    .employee-month-weeks.hidden { display:none; }
+    .employee-week-row { display:grid; grid-template-columns:minmax(160px,1.4fr) repeat(4,minmax(95px,1fr)); gap:10px; align-items:center; padding:12px 0; border-bottom:1px solid #edf1f6; }
+    .employee-week-row:last-child { border-bottom:0; }
+    .employee-week-row span { color:#64748b; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.03em; }
+    .employee-week-row strong { display:block; margin-top:4px; color:#14213d; font-size:13px; }
+    .employee-payroll-empty { padding:22px; border:1px dashed #cbd5e1; border-radius:12px; color:#64748b; text-align:center; background:#f8fafc; }
+    @media (max-width:720px) { .employee-week-row{grid-template-columns:1fr 1fr}.employee-week-row>div:first-child{grid-column:1/-1}.employee-month-summary{align-items:flex-start}.employee-month-summary-total{min-width:110px} }
     .profile-notes { grid-column:1/-1; }
     .profile-actions { display:flex; justify-content:flex-end; gap:9px; flex-wrap:wrap; margin-top:20px; }
     @media (max-width:900px) { .employee-stat-grid{grid-template-columns:1fr 1fr}.employee-directory-header{display:none}.employee-directory-row{grid-template-columns:1fr auto}.employee-directory-row .employee-directory-cell{display:none}.view-profile-label{display:block}.employee-directory-filters{align-items:stretch;flex-direction:column}.employee-directory-toolbar{align-items:flex-start;flex-direction:column}.employee-directory-actions{width:100%}.employee-directory-actions .btn{flex:1}.employee-form-grid,.profile-grid{grid-template-columns:1fr}.profile-notes{grid-column:auto} }
@@ -2099,6 +2125,34 @@
       const start = new Date(today);
       start.setHours(12, 0, 0, 0);
       start.setDate(today.getDate() - daysSinceSaturday);
+
+      const end = new Date(start);
+      end.setDate(start.getDate() + 6);
+
+      return {
+        start: formatLocalDate(start),
+        end: formatLocalDate(end)
+      };
+    }
+
+    // Payroll History keeps the most recently completed Saturday–Friday
+    // payroll visible in Current Payroll through Sunday at 11:59 PM.
+    // The history view rolls to the new payroll week on Monday at midnight.
+    function getCurrentHistoryPayrollWeek(referenceDate = new Date()) {
+      const today = new Date(referenceDate);
+      today.setHours(12, 0, 0, 0);
+
+      const dayOfWeek = today.getDay();
+      const daysSinceSaturday = (dayOfWeek + 1) % 7;
+
+      const start = new Date(today);
+      start.setDate(today.getDate() - daysSinceSaturday);
+
+      // On Saturday and Sunday, continue showing the payroll week that
+      // ended on the immediately preceding Friday.
+      if (dayOfWeek === 6 || dayOfWeek === 0) {
+        start.setDate(start.getDate() - 7);
+      }
 
       const end = new Date(start);
       end.setDate(start.getDate() + 6);
@@ -3024,6 +3078,87 @@
       };
     }
 
+    function employeePayrollRecords(employeeId) {
+      return Object.entries(history)
+        .filter(([, row]) => row.employeeId === employeeId)
+        .map(([id, row]) => ({ id, ...row }))
+        .sort((a, b) => String(b.payrollEndDate || b.weekEnding || b.createdAt || "").localeCompare(String(a.payrollEndDate || a.weekEnding || a.createdAt || "")));
+    }
+
+    function payrollRecordDate(record) {
+      const value = record.payrollEndDate || record.weekEnding || record.payrollStartDate || record.createdAt || "";
+      const date = value ? new Date(String(value).length === 10 ? `${value}T12:00:00` : value) : new Date();
+      return Number.isNaN(date.getTime()) ? new Date() : date;
+    }
+
+    function friendlyPayrollDate(value) {
+      if (!value) return "Not available";
+      const date = new Date(String(value).length === 10 ? `${value}T12:00:00` : value);
+      return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    }
+
+    function renderEmployeePayrollBreakdown(employeeId) {
+      const container = $("employeePayrollBreakdown");
+      const records = employeePayrollRecords(employeeId);
+      const grouped = {};
+
+      records.forEach(record => {
+        const date = payrollRecordDate(record);
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+        if (!grouped[key]) grouped[key] = {
+          label: date.toLocaleDateString("en-US", { month: "long", year: "numeric" }),
+          records: [], hours: 0, gross: 0, nis: 0, net: 0
+        };
+        grouped[key].records.push(record);
+        grouped[key].hours += Number(record.totalHours || 0);
+        grouped[key].gross += Number(record.grossPay || 0);
+        grouped[key].nis += Number(record.nisDeduction || 0);
+        grouped[key].net += Number(record.netAfterNis != null ? record.netAfterNis : Number(record.grossPay || 0) - Number(record.nisDeduction || 0));
+      });
+
+      const months = Object.entries(grouped).sort((a, b) => b[0].localeCompare(a[0]));
+      container.innerHTML = `
+        <div class="employee-payroll-breakdown-header">
+          <div><h3>Payroll breakdown</h3><p>Weekly payroll records grouped by month.</p></div>
+          <button type="button" class="btn secondary" data-close-payroll-breakdown>Close breakdown</button>
+        </div>
+        ${months.length ? months.map(([key, month], index) => `
+          <div class="employee-month-card">
+            <button type="button" class="employee-month-summary" data-toggle-employee-month="${key}">
+              <span class="employee-month-summary-main"><strong>${escapeHtml(month.label)}</strong><span>${month.records.length} weekly record${month.records.length === 1 ? "" : "s"} · ${month.hours.toFixed(2)} hours</span></span>
+              <span class="employee-month-summary-total"><strong>${money(month.gross)}</strong><span>Monthly earned</span></span>
+            </button>
+            <div class="employee-month-weeks${index === 0 ? "" : " hidden"}" data-employee-month-body="${key}">
+              ${month.records.map(record => `
+                <div class="employee-week-row">
+                  <div><span>Payroll week</span><strong>${friendlyPayrollDate(record.payrollStartDate)} – ${friendlyPayrollDate(record.payrollEndDate || record.weekEnding)}</strong></div>
+                  <div><span>Hours</span><strong>${Number(record.totalHours || 0).toFixed(2)}</strong></div>
+                  <div><span>Gross pay</span><strong>${money(record.grossPay)}</strong></div>
+                  <div><span>NIS</span><strong>${money(record.nisDeduction)}</strong></div>
+                  <div><span>After NIS</span><strong>${money(record.netAfterNis != null ? record.netAfterNis : Number(record.grossPay || 0) - Number(record.nisDeduction || 0))}</strong></div>
+                </div>`).join("")}
+              <div class="employee-week-row">
+                <div><span>Monthly total</span><strong>${escapeHtml(month.label)}</strong></div>
+                <div><span>Hours</span><strong>${month.hours.toFixed(2)}</strong></div>
+                <div><span>Gross pay</span><strong>${money(month.gross)}</strong></div>
+                <div><span>NIS</span><strong>${money(month.nis)}</strong></div>
+                <div><span>After NIS</span><strong>${money(month.net)}</strong></div>
+              </div>
+            </div>
+          </div>`).join("") : `<div class="employee-payroll-empty">No payroll records have been saved for this employee yet.</div>`}
+      `;
+
+      container.classList.remove("hidden");
+      container.scrollIntoView({ behavior: "smooth", block: "start" });
+      container.querySelector("[data-close-payroll-breakdown]").addEventListener("click", () => container.classList.add("hidden"));
+      container.querySelectorAll("[data-toggle-employee-month]").forEach(button => {
+        button.addEventListener("click", () => {
+          const body = container.querySelector(`[data-employee-month-body="${button.dataset.toggleEmployeeMonth}"]`);
+          if (body) body.classList.toggle("hidden");
+        });
+      });
+    }
+
     function openEmployeeProfile(employeeId) {
       const employee = employees[employeeId];
       if (!employee) return;
@@ -3053,13 +3188,14 @@
           <div class="profile-field"><span>NIS employee rate</span><strong>${employee.nisRate != null ? `${Number(employee.nisRate).toFixed(2)}%` : "Not set"}</strong></div>
           <div class="profile-field"><span>NIS calculation amount</span><strong>${employee.nisCalculationAmount ? money(employee.nisCalculationAmount) : "Not set"}</strong></div>
           <div class="profile-field profile-notes"><span>NIS calculation example</span><strong>${employee.nisRate != null && employee.nisCalculationAmount ? `${money(employee.nisCalculationAmount)} × ${Number(employee.nisRate).toFixed(2)}% = ${money(Number(employee.nisCalculationAmount) * Number(employee.nisRate) / 100)}` : "Add an NIS rate and calculation amount to calculate the deduction."}</strong></div>
-          <div class="profile-field"><span>Payroll records</span><strong>${stats.records}</strong></div>
-          <div class="profile-field"><span>Total hours recorded</span><strong>${stats.hours.toFixed(2)}</strong></div>
-          <div class="profile-field"><span>Total earned</span><strong>${money(stats.earned)}</strong></div>
+          <button class="profile-stat-button" type="button" data-open-payroll-breakdown="records"><span>Payroll records</span><strong>${stats.records}</strong><small>Click to view weekly and monthly breakdown</small></button>
+          <button class="profile-stat-button" type="button" data-open-payroll-breakdown="hours"><span>Total hours recorded</span><strong>${stats.hours.toFixed(2)}</strong><small>Click to view hours by week</small></button>
+          <button class="profile-stat-button" type="button" data-open-payroll-breakdown="earned"><span>Total earned</span><strong>${money(stats.earned)}</strong><small>Click to view monthly earnings</small></button>
           <div class="profile-field"><span>Date added</span><strong>${employee.createdAt ? new Date(employee.createdAt).toLocaleDateString() : "Not available"}</strong></div>
           <div class="profile-field"><span>Last updated</span><strong>${employee.updatedAt ? new Date(employee.updatedAt).toLocaleDateString() : "Not available"}</strong></div>
           <div class="profile-field profile-notes"><span>Notes</span><strong>${escapeHtml(employee.notes || "No notes added.")}</strong></div>
         </div>
+        <div id="employeePayrollBreakdown" class="employee-payroll-breakdown hidden"></div>
         <div class="profile-actions">
           <button class="btn secondary" type="button" data-profile-toggle="${employeeId}" data-active="${isActive}">${isActive ? "Archive Employee" : "Restore Employee"}</button>
           <button class="btn primary" type="button" data-profile-edit="${employeeId}">Edit Profile</button>
@@ -3067,6 +3203,9 @@
         </div>`;
       $("employeeProfileModal").classList.remove("hidden");
       document.body.style.overflow = "hidden";
+      $("employeeProfileContent").querySelectorAll("[data-open-payroll-breakdown]").forEach(button => {
+        button.addEventListener("click", () => renderEmployeePayrollBreakdown(employeeId));
+      });
       $("employeeProfileContent").querySelector("[data-profile-edit]").addEventListener("click", e => editEmployee(e.currentTarget.dataset.profileEdit));
       $("employeeProfileContent").querySelector("[data-profile-toggle]").addEventListener("click", async e => {
         const id = e.currentTarget.dataset.profileToggle;
@@ -3629,7 +3768,7 @@
         setCurrentPayrollWeek();
         calculate();
 
-        const currentPeriod = getCurrentPayrollWeek();
+        const currentPeriod = getCurrentHistoryPayrollWeek();
         activeHistoryView =
           payrollStartDate === currentPeriod.start &&
           payrollEndDate === currentPeriod.end
@@ -3655,7 +3794,7 @@
     }
 
     function visibleHistoryRows() {
-      const currentPeriod = getCurrentPayrollWeek();
+      const currentPeriod = getCurrentHistoryPayrollWeek();
 
       const searchTerm = (
         $("historySearch")?.value || ""
