@@ -932,11 +932,81 @@
 
     .security-report-header {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
-      gap: 12px;
+      gap: 16px;
       flex-wrap: wrap;
       margin-bottom: 18px;
+      padding: 20px 22px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #14213d 0%, #243b67 100%);
+      color: white;
+      box-shadow: 0 12px 30px rgba(20, 33, 61, 0.18);
+    }
+
+    .security-report-heading {
+      margin: 0 0 5px;
+      font-size: 22px;
+      color: white;
+    }
+
+    .security-report-header .actions .btn {
+      border: 1px solid rgba(255,255,255,.28);
+      background: rgba(255,255,255,.12);
+      color: white;
+      backdrop-filter: blur(8px);
+    }
+
+    .security-report-header .actions .btn:hover {
+      background: rgba(255,255,255,.2);
+    }
+
+    .security-overview-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 16px;
+    }
+
+    .security-overview-card {
+      display: grid;
+      gap: 7px;
+      padding: 18px;
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      background: white;
+      box-shadow: 0 8px 22px rgba(20, 33, 61, .055);
+    }
+
+    .security-overview-card span {
+      color: #64748b;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .04em;
+      text-transform: uppercase;
+    }
+
+    .security-overview-card strong {
+      color: #14213d;
+      font-size: 25px;
+      line-height: 1.1;
+    }
+
+    .security-overview-card small {
+      color: #94a3b8;
+      font-size: 12px;
+    }
+
+    .security-filter-card {
+      display: grid;
+      grid-template-columns: minmax(220px, 1.5fr) minmax(180px, .8fr) auto;
+      gap: 14px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    .security-filter-card label {
+      min-width: 0;
     }
 
     .security-report-subtitle {
@@ -1062,8 +1132,75 @@
     .security-empty {
       text-align: center;
       color: #94a3b8;
-      padding: 40px 20px;
+      padding: 52px 20px;
       font-size: 14px;
+      background: white;
+      border: 1px dashed #cbd5e1;
+      border-radius: 16px;
+    }
+
+    .security-month-card {
+      border-left: 4px solid #fca311;
+    }
+
+    .security-month-header {
+      padding: 19px 20px;
+    }
+
+    .security-month-title {
+      font-size: 18px;
+      font-weight: 800;
+    }
+
+    .security-month-stats span {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: #f1f5f9;
+    }
+
+    .security-table tbody tr:hover td {
+      background: #f8fafc;
+    }
+
+    .security-net-value {
+      color: #047857;
+      font-weight: 800;
+    }
+
+    @media (max-width: 1000px) {
+      .security-overview-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .security-filter-card {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .security-filter-card button {
+        grid-column: 1 / -1;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .security-overview-grid,
+      .security-filter-card {
+        grid-template-columns: 1fr;
+      }
+
+      .security-filter-card button {
+        grid-column: auto;
+      }
+
+      .security-report-header .actions {
+        width: 100%;
+      }
+
+      .security-report-header .actions .btn {
+        flex: 1;
+      }
     }
 
     .day-pay-toggle {
@@ -2042,13 +2179,52 @@
       <section id="securitySection" class="hidden">
         <div class="security-report-header">
           <div>
-            <p class="security-report-subtitle">Weekly records grouped by month · Security department only</p>
+            <h2 class="security-report-heading">Security Payroll Overview</h2>
+            <p class="security-report-subtitle" style="color:#dbe4f0">Review weekly hours, gross pay, NIS deductions and net pay by month.</p>
           </div>
           <div class="actions" style="margin-bottom:0">
-            <button id="securityCsvAll" class="btn dark">Export All CSV</button>
-            <button id="securityPdfAll" class="btn dark">Export All PDF</button>
+            <button id="securityCsvAll" class="btn">Export All CSV</button>
+            <button id="securityPdfAll" class="btn">Export All PDF</button>
           </div>
         </div>
+
+        <div class="security-overview-grid">
+          <div class="security-overview-card">
+            <span>Security employees</span>
+            <strong id="securityEmployeeTotal">0</strong>
+            <small>Employees with payroll records</small>
+          </div>
+          <div class="security-overview-card">
+            <span>Total hours</span>
+            <strong id="securityHoursTotal">0.00</strong>
+            <small>Across visible records</small>
+          </div>
+          <div class="security-overview-card">
+            <span>Gross payroll</span>
+            <strong id="securityGrossTotal">$0.00</strong>
+            <small>Before NIS deductions</small>
+          </div>
+          <div class="security-overview-card">
+            <span>Net payroll</span>
+            <strong id="securityNetTotal">$0.00</strong>
+            <small>After NIS deductions</small>
+          </div>
+        </div>
+
+        <div class="card security-filter-card">
+          <label>
+            Search security employee
+            <input id="securityEmployeeSearch" type="text" placeholder="Name or employee ID" autocomplete="off">
+          </label>
+          <label>
+            Report month
+            <select id="securityMonthFilter">
+              <option value="">All months</option>
+            </select>
+          </label>
+          <button id="securityClearFilters" class="btn secondary" type="button">Clear filters</button>
+        </div>
+
         <div id="securityMonthList"></div>
       </section>
     </main>
@@ -4620,77 +4796,119 @@
     }
 
     function securityTableBody(records) {
-      return records.map(r => `
-        <tr>
-          <td>${escapeHtml(r.employeeName || "")}</td>
-          <td>${r.payrollStartDate || ""}</td>
-          <td>${r.payrollEndDate || r.weekEnding || ""}</td>
-          <td>${Number(r.totalHours || 0).toFixed(2)}</td>
-          <td>${r.totalDayPay ? money(r.totalDayPay) : "—"}</td>
-          <td>${money(r.grossPay)}</td>
-        </tr>
-      `).join("");
+      return records
+        .slice()
+        .sort((a, b) => String(b.payrollStartDate || "").localeCompare(String(a.payrollStartDate || "")))
+        .map(r => {
+          const nis = Number(r.nisDeduction || 0);
+          const net = Number(r.netAfterNis != null ? r.netAfterNis : Number(r.grossPay || 0) - nis);
+          return `
+            <tr>
+              <td><strong>${escapeHtml(r.employeeName || "")}</strong><small>${escapeHtml(r.employeeNumber || employees[r.employeeId]?.employeeId || "No employee ID")}</small></td>
+              <td>${r.payrollStartDate || ""}</td>
+              <td>${r.payrollEndDate || r.weekEnding || ""}</td>
+              <td>${Number(r.totalHours || 0).toFixed(2)}</td>
+              <td>${money(r.grossPay)}</td>
+              <td>${nis > 0 ? money(nis) : "—"}</td>
+              <td class="security-net-value">${money(net)}</td>
+            </tr>
+          `;
+        }).join("");
     }
 
     function renderSecurityReport() {
-      const records = securityRecords();
+      const allRecords = securityRecords();
+      const search = String($("securityEmployeeSearch")?.value || "").trim().toLowerCase();
+      const selectedMonth = String($("securityMonthFilter")?.value || "");
+
+      const allMonths = Object.keys(groupByMonth(allRecords)).sort().reverse();
+      if ($("securityMonthFilter")) {
+        const current = $("securityMonthFilter").value;
+        $("securityMonthFilter").innerHTML = '<option value="">All months</option>' +
+          allMonths.map(key => `<option value="${key}">${monthLabel(key)}</option>`).join("");
+        $("securityMonthFilter").value = allMonths.includes(current) ? current : "";
+      }
+
+      const records = allRecords.filter(row => {
+        const monthKey = String(row.payrollStartDate || row.weekEnding || "").slice(0, 7);
+        const employee = employees[row.employeeId] || {};
+        const haystack = [row.employeeName, row.employeeNumber, employee.employeeId].join(" ").toLowerCase();
+        return (!search || haystack.includes(search)) && (!selectedMonth || monthKey === selectedMonth);
+      });
+
+      const totalHoursAll = records.reduce((s, r) => s + Number(r.totalHours || 0), 0);
+      const totalGrossAll = records.reduce((s, r) => s + Number(r.grossPay || 0), 0);
+      const totalNisAll = records.reduce((s, r) => s + Number(r.nisDeduction || 0), 0);
+      const totalNetAll = records.reduce((s, r) => s + Number(r.netAfterNis != null ? r.netAfterNis : Number(r.grossPay || 0) - Number(r.nisDeduction || 0)), 0);
+      const employeeTotal = new Set(records.map(r => r.employeeId || r.employeeName)).size;
+
+      if ($("securityEmployeeTotal")) $("securityEmployeeTotal").textContent = employeeTotal;
+      if ($("securityHoursTotal")) $("securityHoursTotal").textContent = totalHoursAll.toFixed(2);
+      if ($("securityGrossTotal")) $("securityGrossTotal").textContent = money(totalGrossAll);
+      if ($("securityNetTotal")) $("securityNetTotal").textContent = money(totalNetAll);
+
       const byMonth = groupByMonth(records);
       const monthKeys = Object.keys(byMonth).sort().reverse();
 
       if (!monthKeys.length) {
         $("securityMonthList").innerHTML =
-          '<p class="security-empty">No Security payroll records found. Save payroll for employees in the <strong>Security</strong> department to see monthly reports here.</p>';
+          '<div class="security-empty"><strong>No matching Security payroll records.</strong><br>Adjust the employee or month filter, or save payroll for Security employees.</div>';
         return;
       }
 
-      $("securityMonthList").innerHTML = monthKeys.map(monthKey => {
+      $("securityMonthList").innerHTML = monthKeys.map((monthKey, index) => {
         const mRecords = byMonth[monthKey];
         const totalHours = mRecords.reduce((s, r) => s + Number(r.totalHours || 0), 0);
-        const totalDayPay = mRecords.reduce((s, r) => s + Number(r.totalDayPay || 0), 0);
-        const totalPay = mRecords.reduce((s, r) => s + Number(r.grossPay || 0), 0);
-        const empCount = new Set(mRecords.map(r => r.employeeId)).size;
+        const totalGross = mRecords.reduce((s, r) => s + Number(r.grossPay || 0), 0);
+        const totalNis = mRecords.reduce((s, r) => s + Number(r.nisDeduction || 0), 0);
+        const totalNet = mRecords.reduce((s, r) => s + Number(r.netAfterNis != null ? r.netAfterNis : Number(r.grossPay || 0) - Number(r.nisDeduction || 0)), 0);
+        const empCount = new Set(mRecords.map(r => r.employeeId || r.employeeName)).size;
+        const open = index === 0;
 
         return `
           <div class="card security-month-card">
-            <div class="security-month-header" data-toggle-month="${monthKey}">
+            <div class="security-month-header ${open ? "open" : ""}" data-toggle-month="${monthKey}">
               <div>
                 <h3 class="security-month-title">${monthLabel(monthKey)}</h3>
                 <div class="security-month-stats">
-                  <span><strong>${totalHours.toFixed(2)}</strong> hrs worked</span>
-                  ${totalDayPay > 0 ? `<span><strong>${money(totalDayPay)}</strong> day pay</span>` : ""}
-                  <span><strong>${money(totalPay)}</strong> total pay</span>
-                  <span><strong>${mRecords.length}</strong> ${mRecords.length === 1 ? "record" : "records"}</span>
-                  <span><strong>${empCount}</strong> ${empCount === 1 ? "employee" : "employees"}</span>
+                  <span><strong>${empCount}</strong> employees</span>
+                  <span><strong>${mRecords.length}</strong> payroll records</span>
+                  <span><strong>${totalHours.toFixed(2)}</strong> hours</span>
+                  <span><strong>${money(totalNet)}</strong> net payroll</span>
                 </div>
               </div>
               <div class="security-month-actions">
-                <button type="button" class="btn secondary" data-month-csv="${monthKey}" style="font-size:12px;padding:5px 10px">CSV</button>
-                <button type="button" class="btn secondary" data-month-pdf="${monthKey}" style="font-size:12px;padding:5px 10px">PDF</button>
-                <button type="button" class="security-expand-btn" data-toggle-month="${monthKey}">▼</button>
+                <button type="button" class="btn secondary" data-month-csv="${monthKey}" style="font-size:12px;padding:7px 11px">Export CSV</button>
+                <button type="button" class="btn secondary" data-month-pdf="${monthKey}" style="font-size:12px;padding:7px 11px">Export PDF</button>
+                <button type="button" class="security-expand-btn" data-toggle-month="${monthKey}" aria-label="Toggle ${monthLabel(monthKey)}">${open ? "▲" : "▼"}</button>
               </div>
             </div>
-            <div class="security-month-body hidden" id="sec-month-${monthKey}">
-              <table class="security-table">
-                <thead>
-                  <tr>
-                    <th>Employee</th>
-                    <th>Week Start</th>
-                    <th>Week End</th>
-                    <th>Hours</th>
-                    <th>Day Pay</th>
-                    <th>Total Pay</th>
-                  </tr>
-                </thead>
-                <tbody>${securityTableBody(mRecords)}</tbody>
-                <tfoot>
-                  <tr class="security-total-row">
-                    <td colspan="3">Month Total</td>
-                    <td>${totalHours.toFixed(2)}</td>
-                    <td>${totalDayPay > 0 ? money(totalDayPay) : "—"}</td>
-                    <td>${money(totalPay)}</td>
-                  </tr>
-                </tfoot>
-              </table>
+            <div class="security-month-body ${open ? "" : "hidden"}" id="sec-month-${monthKey}">
+              <div class="table-wrap" style="box-shadow:none;border:0">
+                <table class="security-table">
+                  <thead>
+                    <tr>
+                      <th>Employee</th>
+                      <th>Week Start</th>
+                      <th>Week End</th>
+                      <th>Hours</th>
+                      <th>Gross Pay</th>
+                      <th>NIS</th>
+                      <th>Net Pay</th>
+                    </tr>
+                  </thead>
+                  <tbody>${securityTableBody(mRecords)}</tbody>
+                  <tfoot>
+                    <tr class="security-total-row">
+                      <td colspan="3">${monthLabel(monthKey)} Total</td>
+                      <td>${totalHours.toFixed(2)}</td>
+                      <td>${money(totalGross)}</td>
+                      <td>${totalNis > 0 ? money(totalNis) : "—"}</td>
+                      <td class="security-net-value">${money(totalNet)}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
           </div>
         `;
@@ -4871,6 +5089,14 @@
       a.click();
       URL.revokeObjectURL(url);
     }
+
+    $("securityEmployeeSearch").addEventListener("input", renderSecurityReport);
+    $("securityMonthFilter").addEventListener("change", renderSecurityReport);
+    $("securityClearFilters").addEventListener("click", () => {
+      $("securityEmployeeSearch").value = "";
+      $("securityMonthFilter").value = "";
+      renderSecurityReport();
+    });
 
     $("securityCsvAll").addEventListener("click", exportSecurityAllCsv);
     $("securityPdfAll").addEventListener("click", exportSecurityAllPdf);
