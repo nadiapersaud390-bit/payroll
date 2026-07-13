@@ -930,6 +930,31 @@
       overflow-wrap: anywhere;
     }
 
+
+    .department-report-tabs {
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:16px;
+    }
+    .department-report-tab {
+      border:1px solid #cbd5e1;
+      background:white;
+      color:#475569;
+      border-radius:10px;
+      padding:10px 15px;
+      font:inherit;
+      font-size:13px;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .department-report-tab:hover { background:#f8fafc; }
+    .department-report-tab.active {
+      background:#14213d;
+      border-color:#14213d;
+      color:white;
+    }
+
     .security-report-header {
       display: flex;
       align-items: center;
@@ -1725,7 +1750,15 @@
     .employee-form textarea { width:100%; border:1px solid #cbd5e1; border-radius:9px; padding:11px; font:inherit; resize:vertical; }
     .employee-modal-footer { display:flex; justify-content:flex-end; gap:10px; margin-top:22px; padding-top:18px; border-top:1px solid #e8edf4; }
     .profile-hero { display:flex; align-items:center; gap:16px; padding-bottom:20px; border-bottom:1px solid #e8edf4; }
-    .profile-avatar { width:70px; height:70px; border-radius:18px; display:grid; place-items:center; background:#14213d; color:white; font-size:24px; font-weight:900; }
+    .profile-avatar { width:84px; height:84px; border-radius:20px; display:grid; place-items:center; background:#14213d; color:white; font-size:24px; font-weight:900; overflow:hidden; flex-shrink:0; }
+    .profile-avatar img, .employee-avatar img { width:100%; height:100%; object-fit:cover; display:block; }
+    .employee-photo-field { grid-column:1/-1; padding:16px; border:1px dashed #cbd5e1; border-radius:14px; background:#f8fafc; }
+    .employee-photo-upload { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+    .employee-photo-preview { width:88px; height:88px; border-radius:18px; overflow:hidden; display:grid; place-items:center; background:#14213d; color:white; font-size:25px; font-weight:900; border:3px solid white; box-shadow:0 5px 16px rgba(20,33,61,.15); }
+    .employee-photo-preview img { width:100%; height:100%; object-fit:cover; display:block; }
+    .employee-photo-controls { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+    .employee-photo-help { display:block; margin-top:8px; color:#64748b; font-size:12px; font-weight:500; }
+    #empPhoto { position:absolute; width:1px; height:1px; opacity:0; pointer-events:none; }
     .profile-hero h3 { margin:0; font-size:22px; }
     .profile-hero p { margin:5px 0 0; color:#64748b; }
     .profile-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-top:20px; }
@@ -1782,7 +1815,7 @@
         <button data-tab="employees">Employees</button>
         <button data-tab="summary">Employee Summary</button>
         <button data-tab="history">Payroll History</button>
-        <button data-tab="security">Security Monthly</button>
+        <button data-tab="security">Department Monthly Reports</button>
       </nav>
     </aside>
 
@@ -1957,6 +1990,19 @@
             </div>
             <form id="employeeForm" class="employee-form employee-modal-body">
               <div class="employee-form-grid">
+                <div class="employee-photo-field">
+                  <div class="employee-photo-upload">
+                    <div id="empPhotoPreview" class="employee-photo-preview">EMP</div>
+                    <div>
+                      <div class="employee-photo-controls">
+                        <label for="empPhoto" class="btn dark" style="display:inline-flex;cursor:pointer;">Choose Profile Picture</label>
+                        <button id="removeEmpPhoto" class="btn secondary hidden" type="button">Remove Picture</button>
+                      </div>
+                      <input id="empPhoto" type="file" accept="image/png,image/jpeg,image/webp">
+                      <span class="employee-photo-help">JPG, PNG, or WebP. The picture is resized automatically before saving.</span>
+                    </div>
+                  </div>
+                </div>
                 <label>Full name<input id="empName" required></label>
                 <label>Employee ID<input id="empNumber"></label>
                 <label>Email<input id="empEmail" type="email"></label>
@@ -2177,10 +2223,16 @@
         </div>
       </section>
       <section id="securitySection" class="hidden">
+        <div class="department-report-tabs" aria-label="Department monthly reports">
+          <button type="button" class="department-report-tab active" data-report-department="Security">Security</button>
+          <button type="button" class="department-report-tab" data-report-department="PKD - Price King Distribution">PKD – Price King Distribution</button>
+          <button type="button" class="department-report-tab" data-report-department="J's Outlet">J's Outlet</button>
+        </div>
+
         <div class="security-report-header">
           <div>
-            <h2 class="security-report-heading">Security Payroll Overview</h2>
-            <p class="security-report-subtitle" style="color:#dbe4f0">Review weekly hours, gross pay, NIS deductions and net pay by month.</p>
+            <h2 id="departmentReportHeading" class="security-report-heading">Security Payroll Overview</h2>
+            <p id="departmentReportSubtitle" class="security-report-subtitle" style="color:#dbe4f0">Review weekly hours, gross pay, NIS deductions and net pay by month.</p>
           </div>
           <div class="actions" style="margin-bottom:0">
             <button id="securityCsvAll" class="btn">Export All CSV</button>
@@ -2190,7 +2242,7 @@
 
         <div class="security-overview-grid">
           <div class="security-overview-card">
-            <span>Security employees</span>
+            <span id="departmentEmployeeLabel">Security employees</span>
             <strong id="securityEmployeeTotal">0</strong>
             <small>Employees with payroll records</small>
           </div>
@@ -2213,7 +2265,7 @@
 
         <div class="card security-filter-card">
           <label>
-            Search security employee
+            Search <span id="departmentSearchLabel">Security employee</span>
             <input id="securityEmployeeSearch" type="text" placeholder="Name or employee ID" autocomplete="off">
           </label>
           <label>
@@ -3061,7 +3113,7 @@
         employees: "Employee Setup",
         summary: "Employee Summary",
         history: "Payroll History",
-        security: "Security Monthly Report"
+        security: "Department Monthly Reports"
       };
 
       $("pageTitle").textContent = titles[tab] || tab;
@@ -3102,6 +3154,64 @@
       renderSummary();
     });
 
+    let pendingEmployeePhoto = "";
+
+    function employeeAvatarMarkup(employee, className = "employee-avatar") {
+      if (employee && employee.profilePhoto) {
+        return `<span class="${className}"><img src="${employee.profilePhoto}" alt="${escapeHtml(employee.name || "Employee")}"></span>`;
+      }
+      return `<span class="${className}">${escapeHtml(employeeInitials(employee?.name))}</span>`;
+    }
+
+    function renderEmployeePhotoPreview() {
+      const preview = $("empPhotoPreview");
+      const name = $("empName").value || "Employee";
+      preview.innerHTML = pendingEmployeePhoto
+        ? `<img src="${pendingEmployeePhoto}" alt="Profile preview">`
+        : escapeHtml(employeeInitials(name));
+      $("removeEmpPhoto").classList.toggle("hidden", !pendingEmployeePhoto);
+    }
+
+    async function resizeEmployeePhoto(file) {
+      if (!file || !file.type.startsWith("image/")) throw new Error("Please choose a valid image file.");
+      if (file.size > 8 * 1024 * 1024) throw new Error("The picture must be smaller than 8 MB.");
+      const dataUrl = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error("The picture could not be read."));
+        reader.readAsDataURL(file);
+      });
+      const image = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error("The picture could not be opened."));
+        img.src = dataUrl;
+      });
+      const size = 512;
+      const canvas = document.createElement("canvas");
+      canvas.width = size; canvas.height = size;
+      const ctx = canvas.getContext("2d");
+      const scale = Math.max(size / image.width, size / image.height);
+      const width = image.width * scale, height = image.height * scale;
+      ctx.drawImage(image, (size - width) / 2, (size - height) / 2, width, height);
+      return canvas.toDataURL("image/jpeg", 0.82);
+    }
+
+    $("empPhoto").addEventListener("change", async event => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      try {
+        pendingEmployeePhoto = await resizeEmployeePhoto(file);
+        renderEmployeePhotoPreview();
+      } catch (error) {
+        notice(error.message || "Unable to add that picture.");
+      } finally {
+        event.target.value = "";
+      }
+    });
+    $("removeEmpPhoto").addEventListener("click", () => { pendingEmployeePhoto = ""; renderEmployeePhotoPreview(); });
+    $("empName").addEventListener("input", () => { if (!pendingEmployeePhoto) renderEmployeePhotoPreview(); });
+
     function openEmployeeFormModal() {
       $("employeeFormModal").classList.remove("hidden");
       document.body.style.overflow = "hidden";
@@ -3116,6 +3226,8 @@
     function resetEmployeeForm() {
       editingEmployeeId = "";
       $("employeeForm").reset();
+      pendingEmployeePhoto = "";
+      renderEmployeePhotoPreview();
       $("employeeFormTitle").textContent = "Add new employee";
       $("employeeSubmitButton").textContent = "Add Employee";
       closeEmployeeFormModal();
@@ -3124,6 +3236,8 @@
     function startAddEmployee() {
       editingEmployeeId = "";
       $("employeeForm").reset();
+      pendingEmployeePhoto = "";
+      renderEmployeePhotoPreview();
       $("employeeFormTitle").textContent = "Add new employee";
       $("employeeSubmitButton").textContent = "Add Employee";
       openEmployeeFormModal();
@@ -3138,6 +3252,8 @@
       $("empEmail").value = employee.email || "";
       $("empPhone").value = employee.phone || "";
       $("empBirthday").value = employee.birthday || "";
+      pendingEmployeePhoto = employee.profilePhoto || "";
+      renderEmployeePhotoPreview();
       $("empDepartment").value = employee.department || "";
       $("empLocation").value = employee.location || "";
       $("empRate").value = employee.hourlyRate ?? "";
@@ -3346,7 +3462,7 @@
       $("employeeProfileName").textContent = employee.name || "Employee";
       $("employeeProfileContent").innerHTML = `
         <div class="profile-hero">
-          <div class="profile-avatar">${escapeHtml(employeeInitials(employee.name))}</div>
+          ${employeeAvatarMarkup(employee, "profile-avatar")}
           <div>
             <h3>${escapeHtml(employee.name || "Unnamed employee")}</h3>
             <p>${escapeHtml(employee.department || "No department assigned")} · ${escapeHtml(employee.location || "No location assigned")}</p>
@@ -3484,7 +3600,7 @@
         ${visibleEntries.map(([id, employee]) => {
           const isActive = employee.active !== false;
           return `<button type="button" class="employee-directory-row${isActive ? "" : " inactive"}" data-view-employee="${id}">
-            <span class="employee-identity"><span class="employee-avatar">${escapeHtml(employeeInitials(employee.name))}</span><span class="employee-identity-text"><strong>${escapeHtml(employee.name || "Unnamed employee")}</strong><small>${escapeHtml(employee.employeeId || "No employee ID")} · ${money(employee.hourlyRate)}/hr</small></span></span>
+            <span class="employee-identity">${employeeAvatarMarkup(employee)}<span class="employee-identity-text"><strong>${escapeHtml(employee.name || "Unnamed employee")}</strong><small>${escapeHtml(employee.employeeId || "No employee ID")} · ${money(employee.hourlyRate)}/hr</small></span></span>
             <span class="employee-directory-cell"><strong>${escapeHtml(employee.department || "Unassigned")}</strong><small>${escapeHtml(employee.location || "No location")}</small></span>
             <span class="employee-directory-cell"><strong>${escapeHtml(employee.email || employee.phone || "No contact details")}</strong><small>${employee.email && employee.phone ? escapeHtml(employee.phone) : ""}</small></span>
             <span class="employee-directory-cell"><span class="status-pill ${isActive ? "active" : "archived"}">${isActive ? "Active" : "Archived"}</span></span>
@@ -3537,6 +3653,7 @@
           email: $("empEmail").value.trim(),
           phone: $("empPhone").value.trim(),
           birthday: $("empBirthday").value,
+          profilePhoto: pendingEmployeePhoto || null,
           department: $("empDepartment").value,
           location: $("empLocation").value.trim(),
           hourlyRate,
@@ -4768,12 +4885,25 @@
       );
     }
 
-    // ── Security Monthly Report ──────────────────────────
+    // ── Department Monthly Reports ───────────────────────
+
+    let activeMonthlyReportDepartment = "Security";
+
+    function departmentReportName(department = activeMonthlyReportDepartment) {
+      if (department === "PKD - Price King Distribution") return "PKD – Price King Distribution";
+      return department || "Department";
+    }
+
+    function departmentReportSlug(department = activeMonthlyReportDepartment) {
+      if (department === "PKD - Price King Distribution") return "pkd";
+      if (department === "J's Outlet") return "js-outlet";
+      return "security";
+    }
 
     function securityRecords() {
       return historyArray().filter(row => {
-        const dept = employees[row.employeeId]?.department || "";
-        return dept === "Security";
+        const dept = employees[row.employeeId]?.department || row.department || "";
+        return dept === activeMonthlyReportDepartment;
       });
     }
 
@@ -4817,6 +4947,14 @@
     }
 
     function renderSecurityReport() {
+      const reportName = departmentReportName();
+      document.querySelectorAll("[data-report-department]").forEach(button => {
+        button.classList.toggle("active", button.dataset.reportDepartment === activeMonthlyReportDepartment);
+      });
+      if ($("departmentReportHeading")) $("departmentReportHeading").textContent = `${reportName} Payroll Overview`;
+      if ($("departmentEmployeeLabel")) $("departmentEmployeeLabel").textContent = `${reportName} employees`;
+      if ($("departmentSearchLabel")) $("departmentSearchLabel").textContent = `${reportName} employee`;
+
       const allRecords = securityRecords();
       const search = String($("securityEmployeeSearch")?.value || "").trim().toLowerCase();
       const selectedMonth = String($("securityMonthFilter")?.value || "");
@@ -4852,7 +4990,7 @@
 
       if (!monthKeys.length) {
         $("securityMonthList").innerHTML =
-          '<div class="security-empty"><strong>No matching Security payroll records.</strong><br>Adjust the employee or month filter, or save payroll for Security employees.</div>';
+          `<div class="security-empty"><strong>No matching ${escapeHtml(reportName)} payroll records.</strong><br>Adjust the employee or month filter, or save payroll for ${escapeHtml(reportName)} employees.</div>`;
         return;
       }
 
@@ -4966,7 +5104,7 @@
       const csv = [headers, ...rows]
         .map(row => row.map(c => `"${String(c).replace(/"/g, '""')}"`).join(","))
         .join("\n");
-      downloadBlob(csv, "text/csv", `security-${monthKey}.csv`);
+      downloadBlob(csv, "text/csv", `${departmentReportSlug()}-${monthKey}.csv`);
     }
 
     function exportSecurityPdf(records, monthKey) {
@@ -4976,7 +5114,7 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       doc.setFontSize(16);
-      doc.text(`Security Monthly Report — ${label}`, 14, 18);
+      doc.text(`${departmentReportName()} Monthly Report — ${label}`, 14, 18);
       doc.setFontSize(11);
       doc.text(`Total Hours: ${totalHours.toFixed(2)}     Total Pay: ${money(totalPay)}`, 14, 27);
       doc.autoTable({
@@ -5001,14 +5139,14 @@
           }
         }
       });
-      doc.save(`security-${monthKey}.pdf`);
+      doc.save(`${departmentReportSlug()}-${monthKey}.pdf`);
     }
 
     function exportSecurityAllCsv() {
       const records = securityRecords();
       const byMonth = groupByMonth(records);
       const monthKeys = Object.keys(byMonth).sort();
-      if (!monthKeys.length) { notice("No Security records to export."); return; }
+      if (!monthKeys.length) { notice(`No ${departmentReportName()} records to export.`); return; }
       const headers = ["Month", "Employee", "Week Start", "Week End", "Hours Worked", "Day Pay", "Total Pay"];
       const allRows = [];
       monthKeys.forEach(mk => {
@@ -5032,18 +5170,18 @@
       const csv = [headers, ...allRows]
         .map(row => row.map(c => `"${String(c ?? "").replace(/"/g, '""')}"`).join(","))
         .join("\n");
-      downloadBlob(csv, "text/csv", "security-all-months.csv");
+      downloadBlob(csv, "text/csv", `${departmentReportSlug()}-all-months.csv`);
     }
 
     function exportSecurityAllPdf() {
       const records = securityRecords();
       const byMonth = groupByMonth(records);
       const monthKeys = Object.keys(byMonth).sort();
-      if (!monthKeys.length) { notice("No Security records to export."); return; }
+      if (!monthKeys.length) { notice(`No ${departmentReportName()} records to export.`); return; }
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
       doc.setFontSize(18);
-      doc.text("Security Monthly Report — All Months", 14, 18);
+      doc.text(`${departmentReportName()} Monthly Report — All Months`, 14, 18);
       let yPos = 28;
       monthKeys.forEach((mk, idx) => {
         const mRecords = byMonth[mk];
@@ -5077,7 +5215,7 @@
           }
         });
       });
-      doc.save("security-all-months.pdf");
+      doc.save(`${departmentReportSlug()}-all-months.pdf`);
     }
 
     function downloadBlob(content, mimeType, filename) {
@@ -5089,6 +5227,15 @@
       a.click();
       URL.revokeObjectURL(url);
     }
+
+    document.querySelectorAll("[data-report-department]").forEach(button => {
+      button.addEventListener("click", () => {
+        activeMonthlyReportDepartment = button.dataset.reportDepartment || "Security";
+        $("securityEmployeeSearch").value = "";
+        $("securityMonthFilter").value = "";
+        renderSecurityReport();
+      });
+    });
 
     $("securityEmployeeSearch").addEventListener("input", renderSecurityReport);
     $("securityMonthFilter").addEventListener("change", renderSecurityReport);
