@@ -1824,6 +1824,7 @@
                 <label>Employee ID<input id="empNumber"></label>
                 <label>Email<input id="empEmail" type="email"></label>
                 <label>Phone<input id="empPhone"></label>
+                <label>Date of birth<input id="empBirthday" type="date"></label>
                 <label>Department<select id="empDepartment"><option value="">— Select department —</option><option value="Security">Security</option><option value="PKD - Price King Distribution">PKD - Price King Distribution</option><option value="J's Outlet">J's Outlet</option></select></label>
                 <label>Location<input id="empLocation" placeholder="Office, branch, city, or job site"></label>
                 <label>Hourly rate<input id="empRate" required type="number" min="0" step="0.01"></label>
@@ -2960,6 +2961,7 @@
       $("empNumber").value = employee.employeeId || "";
       $("empEmail").value = employee.email || "";
       $("empPhone").value = employee.phone || "";
+      $("empBirthday").value = employee.birthday || "";
       $("empDepartment").value = employee.department || "";
       $("empLocation").value = employee.location || "";
       $("empRate").value = employee.hourlyRate ?? "";
@@ -3180,6 +3182,7 @@
           <div class="profile-field"><span>Department</span><strong>${escapeHtml(employee.department || "Unassigned")}</strong></div>
           <div class="profile-field"><span>Email</span><strong>${escapeHtml(employee.email || "Not provided")}</strong></div>
           <div class="profile-field"><span>Phone</span><strong>${escapeHtml(employee.phone || "Not provided")}</strong></div>
+          <div class="profile-field"><span>Date of birth</span><strong>${employee.birthday ? new Date(`${employee.birthday}T12:00:00`).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : "Not provided"}</strong></div>
           <div class="profile-field"><span>Location</span><strong>${escapeHtml(employee.location || "Not provided")}</strong></div>
           <div class="profile-field"><span>Hourly rate</span><strong>${money(employee.hourlyRate)}/hr</strong></div>
           <div class="profile-field"><span>Day pay rate</span><strong>${employee.dayPayRate ? money(employee.dayPayRate) : "Not set"}</strong></div>
@@ -3357,6 +3360,7 @@
           employeeId: $("empNumber").value.trim(),
           email: $("empEmail").value.trim(),
           phone: $("empPhone").value.trim(),
+          birthday: $("empBirthday").value,
           department: $("empDepartment").value,
           location: $("empLocation").value.trim(),
           hourlyRate,
