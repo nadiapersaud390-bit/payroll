@@ -2939,6 +2939,22 @@
     );
 
     document.addEventListener("click", event => {
+      const employeeEditButton = event.target.closest("[data-profile-edit]");
+      if (employeeEditButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        editEmployee(employeeEditButton.dataset.profileEdit);
+        return;
+      }
+
+      const payrollEditButton = event.target.closest("[data-edit-payroll]");
+      if (payrollEditButton) {
+        event.preventDefault();
+        event.stopPropagation();
+        editPayrollRecord(payrollEditButton.dataset.editPayroll);
+        return;
+      }
+
       if (!event.target.closest(".employee-picker")) closeEmployeeSearchResults();
       if (!event.target.closest(".brand-wrap")) closeDepartmentMenu();
     });
@@ -3501,7 +3517,6 @@
       $("employeeProfileContent").querySelectorAll("[data-open-payroll-breakdown]").forEach(button => {
         button.addEventListener("click", () => renderEmployeePayrollBreakdown(employeeId));
       });
-      $("employeeProfileContent").querySelector("[data-profile-edit]").addEventListener("click", e => editEmployee(e.currentTarget.dataset.profileEdit));
       $("employeeProfileContent").querySelector("[data-profile-toggle]").addEventListener("click", async e => {
         const id = e.currentTarget.dataset.profileToggle;
         const current = employees[id];
@@ -4444,16 +4459,6 @@
 
       $("selectAllHistory").checked = false;
       $("selectAllHistoryTable").checked = false;
-
-      document
-        .querySelectorAll("[data-edit-payroll]")
-        .forEach(button => {
-          button.addEventListener("click", () => {
-            editPayrollRecord(
-              button.dataset.editPayroll
-            );
-          });
-        });
 
       document
         .querySelectorAll("[data-delete-payroll]")
