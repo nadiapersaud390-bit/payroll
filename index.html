@@ -1194,6 +1194,7 @@
 
     .summary-clickable-row { cursor: pointer; transition: background .12s; }
     .summary-clickable-row:hover td { background: #f0f5ff; }
+    .summary-name-btn { background: none; border: none; padding: 0; margin: 0; font: inherit; color: #1d4ed8; cursor: pointer; text-align: left; text-decoration: underline; text-underline-offset: 2px; font-weight: 600; }
 
     .security-table tbody tr:hover td {
       background: #f8fafc;
@@ -3525,8 +3526,28 @@
     }
 
     function openEmployeeProfile(employeeId) {
-      const employee = employees[employeeId];
+      // Strategy 1: direct Firebase push-key lookup
+      let employee = employees[employeeId];
+      let resolvedKey = employeeId;
+
+      // Strategy 2: employeeId is a custom ID string (e.g. from CSV import)
+      if (!employee && employeeId) {
+        const found = Object.entries(employees).find(([, emp]) =>
+          emp.employeeId === employeeId
+        );
+        if (found) { resolvedKey = found[0]; employee = found[1]; }
+      }
+
+      // Strategy 3: match by name (last resort)
+      if (!employee && employeeId) {
+        const found = Object.entries(employees).find(([, emp]) =>
+          emp.name === employeeId
+        );
+        if (found) { resolvedKey = found[0]; employee = found[1]; }
+      }
+
       if (!employee) return;
+      employeeId = resolvedKey;
       selectedEmployeeProfileId = employeeId;
       const isActive = employee.active !== false;
       const stats = employeePayrollStats(employeeId);
@@ -4703,16 +4724,18 @@
 
     function renderSummary() {
       const rows = summaryArray();
+      const tbody = $("summaryRows");
 
-      $("summaryRows").innerHTML = rows.length
+      tbody.innerHTML = rows.length
         ? rows.map(row => `
-          <tr
-            class="summary-clickable-row"
-            data-view-employee="${escapeHtml(row.employeeId || "")}"
-            title="Click to view ${escapeHtml(row.employeeName)}'s full profile"
-          >
+          <tr class="summary-clickable-row">
             <td>
-              <strong>${escapeHtml(row.employeeName)}</strong>
+              <button
+                type="button"
+                class="summary-name-btn"
+                data-view-employee="${escapeHtml(row.employeeId || "")}"
+                data-view-employee-name="${escapeHtml(row.employeeName || "")}"
+              >${escapeHtml(row.employeeName)}</button>
             </td>
             <td>${row.payrollCount}</td>
             <td>${row.hours.toFixed(2)}</td>
@@ -4727,12 +4750,15 @@
           </tr>
         `;
 
-      $("summaryRows").querySelectorAll("[data-view-employee]").forEach(tr => {
-        tr.addEventListener("click", () => {
-          const id = tr.dataset.viewEmployee;
-          if (id) openEmployeeProfile(id);
-        });
-      });
+      // Use event delegation on tbody — survives re-renders and is more reliable than per-row listeners
+      tbody.onclick = e => {
+        const btn = e.target.closest("[data-view-employee]");
+        if (!btn) return;
+        const id   = btn.dataset.viewEmployee;
+        const name = btn.dataset.viewEmployeeName;
+        // Try by Firebase key first; openEmployeeProfile will fall back to name
+        openEmployeeProfile(id || name);
+      };
     }
 
     const COLUMN_DEFINITIONS = {
