@@ -2045,63 +2045,6 @@
           </div>
           <div id="employeeList" class="employee-directory-list"></div>
         </div>
-
-        <div id="employeeFormModal" class="employee-modal hidden" role="dialog" aria-modal="true" aria-labelledby="employeeFormTitle">
-          <div class="employee-modal-backdrop" data-close-employee-form></div>
-          <div class="employee-modal-panel employee-form-modal-panel">
-            <div class="employee-modal-header">
-              <div><p class="employee-modal-kicker">Employee record</p><h2 id="employeeFormTitle">Add new employee</h2></div>
-              <button class="employee-modal-close" type="button" data-close-employee-form aria-label="Close">×</button>
-            </div>
-            <form id="employeeForm" class="employee-form employee-modal-body">
-              <div class="employee-form-grid">
-                <div class="employee-photo-field">
-                  <div class="employee-photo-upload">
-                    <div id="empPhotoPreview" class="employee-photo-preview">EMP</div>
-                    <div>
-                      <div class="employee-photo-controls">
-                        <label for="empPhoto" class="btn dark" style="display:inline-flex;cursor:pointer;">Choose Profile Picture</label>
-                        <button id="removeEmpPhoto" class="btn secondary hidden" type="button">Remove Picture</button>
-                      </div>
-                      <input id="empPhoto" type="file" accept="image/png,image/jpeg,image/webp">
-                      <span class="employee-photo-help">JPG, PNG, or WebP. The picture is resized automatically before saving.</span>
-                    </div>
-                  </div>
-                </div>
-                <label>Full name<input id="empName" required></label>
-                <label>Employee ID<input id="empNumber"></label>
-                <label>Email<input id="empEmail" type="email"></label>
-                <label>Phone<input id="empPhone"></label>
-                <label>Date of birth<input id="empBirthday" type="date"></label>
-                <label>Department<select id="empDepartment"><option value="">— Select department —</option><option value="Security">Security</option><option value="PKD - Price King Distribution">PKD - Price King Distribution</option><option value="J's Outlet">J's Outlet</option></select></label>
-                <label>Location<input id="empLocation" placeholder="Office, branch, city, or job site"></label>
-                <label>Hourly rate<input id="empRate" required type="number" min="0" step="0.01"></label>
-                <label>Day Pay Rate<input id="empDayRate" type="number" min="0" step="0.01" placeholder="Optional"></label>
-                <label>TIN number<input id="empTin" placeholder="Taxpayer Identification Number"></label>
-                <label>NIS number<input id="empNisNumber" placeholder="National Insurance Scheme number"></label>
-                <label>NIS employee rate (%)<input id="empNisRate" type="number" min="0" max="100" step="0.01" placeholder="e.g. 5"></label>
-                <label>NIS calculation amount<input id="empNisBase" type="number" min="0" step="0.01" placeholder="e.g. 25000"></label>
-                <p class="employee-form-full" style="margin:-2px 0 0;color:#64748b;font-size:12px;line-height:1.5;">NIS is calculated on the lower of the employee’s gross pay or this calculation amount. Example: $50,000 gross, $25,000 calculation amount and 5% rate = $1,250 NIS.</p>
-                <label class="employee-form-full">Notes<textarea id="empNotes" rows="4" placeholder="Employment notes, status, or other details"></textarea></label>
-              </div>
-              <div class="employee-modal-footer">
-                <button id="cancelEmployeeEdit" class="btn secondary" type="button">Cancel</button>
-                <button id="employeeSubmitButton" class="btn primary" type="submit">Add Employee</button>
-              </div>
-            </form>
-          </div>
-        </div>
-
-        <div id="employeeProfileModal" class="employee-modal hidden" role="dialog" aria-modal="true" aria-labelledby="employeeProfileName">
-          <div class="employee-modal-backdrop" data-close-employee-profile></div>
-          <div class="employee-modal-panel employee-profile-panel">
-            <div class="employee-modal-header">
-              <div><p class="employee-modal-kicker">Employee profile</p><h2 id="employeeProfileName">Employee</h2></div>
-              <button class="employee-modal-close" type="button" data-close-employee-profile aria-label="Close">×</button>
-            </div>
-            <div id="employeeProfileContent" class="employee-modal-body"></div>
-          </div>
-        </div>
       </section>
 
       <section id="summarySection" class="hidden">
@@ -2344,6 +2287,64 @@
 
         <div id="securityMonthList"></div>
       </section>
+
+    <div id="employeeFormModal" class="employee-modal hidden" role="dialog" aria-modal="true" aria-labelledby="employeeFormTitle">
+      <div class="employee-modal-backdrop" data-close-employee-form></div>
+      <div class="employee-modal-panel employee-form-modal-panel">
+        <div class="employee-modal-header">
+          <div><p class="employee-modal-kicker">Employee record</p><h2 id="employeeFormTitle">Add new employee</h2></div>
+          <button class="employee-modal-close" type="button" data-close-employee-form aria-label="Close">×</button>
+        </div>
+        <form id="employeeForm" class="employee-form employee-modal-body">
+          <div class="employee-form-grid">
+            <div class="employee-photo-field">
+              <div class="employee-photo-upload">
+                <div id="empPhotoPreview" class="employee-photo-preview">EMP</div>
+                <div>
+                  <div class="employee-photo-controls">
+                    <label for="empPhoto" class="btn dark" style="display:inline-flex;cursor:pointer;">Choose Profile Picture</label>
+                    <button id="removeEmpPhoto" class="btn secondary hidden" type="button">Remove Picture</button>
+                  </div>
+                  <input id="empPhoto" type="file" accept="image/png,image/jpeg,image/webp">
+                  <span class="employee-photo-help">JPG, PNG, or WebP. The picture is resized automatically before saving.</span>
+                </div>
+              </div>
+            </div>
+            <label>Full name<input id="empName" required></label>
+            <label>Employee ID<input id="empNumber"></label>
+            <label>Email<input id="empEmail" type="email"></label>
+            <label>Phone<input id="empPhone"></label>
+            <label>Date of birth<input id="empBirthday" type="date"></label>
+            <label>Department<select id="empDepartment"><option value="">— Select department —</option><option value="Security">Security</option><option value="PKD - Price King Distribution">PKD - Price King Distribution</option><option value="J's Outlet">J's Outlet</option></select></label>
+            <label>Location<input id="empLocation" placeholder="Office, branch, city, or job site"></label>
+            <label>Hourly rate<input id="empRate" required type="number" min="0" step="0.01"></label>
+            <label>Day Pay Rate<input id="empDayRate" type="number" min="0" step="0.01" placeholder="Optional"></label>
+            <label>TIN number<input id="empTin" placeholder="Taxpayer Identification Number"></label>
+            <label>NIS number<input id="empNisNumber" placeholder="National Insurance Scheme number"></label>
+            <label>NIS employee rate (%)<input id="empNisRate" type="number" min="0" max="100" step="0.01" placeholder="e.g. 5"></label>
+            <label>NIS calculation amount<input id="empNisBase" type="number" min="0" step="0.01" placeholder="e.g. 25000"></label>
+            <p class="employee-form-full" style="margin:-2px 0 0;color:#64748b;font-size:12px;line-height:1.5;">NIS is calculated on the lower of the employee’s gross pay or this calculation amount. Example: $50,000 gross, $25,000 calculation amount and 5% rate = $1,250 NIS.</p>
+            <label class="employee-form-full">Notes<textarea id="empNotes" rows="4" placeholder="Employment notes, status, or other details"></textarea></label>
+          </div>
+          <div class="employee-modal-footer">
+            <button id="cancelEmployeeEdit" class="btn secondary" type="button">Cancel</button>
+            <button id="employeeSubmitButton" class="btn primary" type="submit">Add Employee</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="employeeProfileModal" class="employee-modal hidden" role="dialog" aria-modal="true" aria-labelledby="employeeProfileName">
+      <div class="employee-modal-backdrop" data-close-employee-profile></div>
+      <div class="employee-modal-panel employee-profile-panel">
+        <div class="employee-modal-header">
+          <div><p class="employee-modal-kicker">Employee profile</p><h2 id="employeeProfileName">Employee</h2></div>
+          <button class="employee-modal-close" type="button" data-close-employee-profile aria-label="Close">×</button>
+        </div>
+        <div id="employeeProfileContent" class="employee-modal-body"></div>
+      </div>
+    </div>
+
     </main>
   </div>
 
