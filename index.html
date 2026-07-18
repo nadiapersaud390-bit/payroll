@@ -1192,8 +1192,67 @@
       background: #f1f5f9;
     }
 
+    .summary-clickable-row { cursor: pointer; transition: background .12s; }
+    .summary-clickable-row:hover td { background: #f0f5ff; }
+
     .security-table tbody tr:hover td {
       background: #f8fafc;
+    }
+
+    .sec-emp-group-row {
+      cursor: pointer;
+      background: #f8fafc;
+    }
+
+    .sec-emp-group-row td {
+      padding: 10px 10px;
+      border-bottom: 1px solid #e2e8f0;
+      font-weight: 700;
+    }
+
+    .sec-emp-group-row:hover td {
+      background: #eef3fb;
+    }
+
+    .sec-emp-group-row .sec-emp-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sec-emp-toggle {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 5px;
+      background: #e2e8f0;
+      font-size: 10px;
+      flex-shrink: 0;
+      transition: transform .18s;
+    }
+
+    .sec-emp-group-row.open .sec-emp-toggle {
+      transform: rotate(180deg);
+    }
+
+    .sec-emp-week-row td {
+      background: white;
+      padding: 7px 10px;
+      color: #475569;
+      font-size: 12.5px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .sec-emp-week-row td:first-child {
+      padding-left: 38px;
+      color: #94a3b8;
+      font-size: 11px;
+    }
+
+    .sec-emp-week-row.hidden {
+      display: none;
     }
 
     .security-net-value {
@@ -4575,6 +4634,7 @@
       historyArray().filter(recordMatchesActiveDepartment).forEach(row => {
         if (!summary[row.employeeId]) {
           summary[row.employeeId] = {
+            employeeId: row.employeeId,
             employeeName: row.employeeName,
             payrollCount: 0,
             hours: 0,
@@ -4594,6 +4654,7 @@
         .forEach(([id, employee]) => {
           if (!summary[id]) {
             summary[id] = {
+              employeeId: id,
               employeeName: employee.name,
               payrollCount: 0,
               hours: 0,
@@ -4616,7 +4677,11 @@
 
       $("summaryRows").innerHTML = rows.length
         ? rows.map(row => `
-          <tr>
+          <tr
+            class="summary-clickable-row"
+            data-view-employee="${escapeHtml(row.employeeId || "")}"
+            title="Click to view ${escapeHtml(row.employeeName)}'s full profile"
+          >
             <td>
               <strong>${escapeHtml(row.employeeName)}</strong>
             </td>
@@ -4632,6 +4697,13 @@
             </td>
           </tr>
         `;
+
+      $("summaryRows").querySelectorAll("[data-view-employee]").forEach(tr => {
+        tr.addEventListener("click", () => {
+          const id = tr.dataset.viewEmployee;
+          if (id) openEmployeeProfile(id);
+        });
+      });
     }
 
     const COLUMN_DEFINITIONS = {
@@ -4947,18 +5019,50 @@
         .toLocaleString("default", { month: "long", year: "numeric" });
     }
 
-    function securityTableBody(records) {
-      return records
-        .slice()
-        .sort((a, b) => String(b.payrollStartDate || "").localeCompare(String(a.payrollStartDate || "")))
-        .map(r => {
+    function securityTableBodyGrouped(records, monthKey) {
+      // Group records by employee
+      const empMap = {};
+      records.forEach(r => {
+        const key = r.employeeId || r.employeeName;
+        if (!empMap[key]) {
+          empMap[key] = {
+            employeeId: r.employeeId,
+            employeeName: r.employeeName || "",
+            employeeNumber: r.employeeNumber || employees[r.employeeId]?.employeeId || "",
+            weeks: []
+          };
+        }
+        empMap[key].weeks.push(r);
+      });
+
+      // Sort employees by name; sort their weeks by start date desc
+      const empGroups = Object.values(empMap).sort((a, b) =>
+        a.employeeName.localeCompare(b.employeeName)
+      );
+
+      return empGroups.map((emp, empIdx) => {
+        const weeks = emp.weeks.slice().sort((a, b) =>
+          String(b.payrollStartDate || "").localeCompare(String(a.payrollStartDate || ""))
+        );
+
+        const totalHours = weeks.reduce((s, r) => s + Number(r.totalHours || 0), 0);
+        const totalGross = weeks.reduce((s, r) => s + Number(r.grossPay || 0), 0);
+        const totalNis   = weeks.reduce((s, r) => s + Number(r.nisDeduction || 0), 0);
+        const totalNet   = weeks.reduce((s, r) => {
+          const nis = Number(r.nisDeduction || 0);
+          return s + Number(r.netAfterNis != null ? r.netAfterNis : Number(r.grossPay || 0) - nis);
+        }, 0);
+
+        const groupId = `sec-emp-${monthKey}-${empIdx}`;
+
+        const weekRows = weeks.map(r => {
           const nis = Number(r.nisDeduction || 0);
           const net = Number(r.netAfterNis != null ? r.netAfterNis : Number(r.grossPay || 0) - nis);
           return `
-            <tr>
-              <td><strong>${escapeHtml(r.employeeName || "")}</strong><small>${escapeHtml(r.employeeNumber || employees[r.employeeId]?.employeeId || "No employee ID")}</small></td>
-              <td>${r.payrollStartDate || ""}</td>
-              <td>${r.payrollEndDate || r.weekEnding || ""}</td>
+            <tr class="sec-emp-week-row hidden" data-emp-group="${groupId}">
+              <td>↳</td>
+              <td>${r.payrollStartDate || "—"}</td>
+              <td>${r.payrollEndDate || r.weekEnding || "—"}</td>
               <td>${Number(r.totalHours || 0).toFixed(2)}</td>
               <td>${money(r.grossPay)}</td>
               <td>${nis > 0 ? money(nis) : "—"}</td>
@@ -4966,6 +5070,28 @@
             </tr>
           `;
         }).join("");
+
+        return `
+          <tr class="sec-emp-group-row" data-toggle-emp="${groupId}"
+              title="Click to expand ${escapeHtml(emp.employeeName)}'s weekly breakdown">
+            <td>
+              <span class="sec-emp-name">
+                <span class="sec-emp-toggle">▼</span>
+                <span>
+                  <strong>${escapeHtml(emp.employeeName)}</strong>
+                  <small style="display:block;font-weight:400;color:#64748b;font-size:11px">${weeks.length} week${weeks.length === 1 ? "" : "s"}</small>
+                </span>
+              </span>
+            </td>
+            <td colspan="2" style="color:#94a3b8;font-size:12px">Click to expand</td>
+            <td>${totalHours.toFixed(2)}</td>
+            <td>${money(totalGross)}</td>
+            <td>${totalNis > 0 ? money(totalNis) : "—"}</td>
+            <td class="security-net-value">${money(totalNet)}</td>
+          </tr>
+          ${weekRows}
+        `;
+      }).join("");
     }
 
     function renderSecurityReport() {
@@ -5057,7 +5183,7 @@
                       <th>Net Pay</th>
                     </tr>
                   </thead>
-                  <tbody>${securityTableBody(mRecords)}</tbody>
+                  <tbody>${securityTableBodyGrouped(mRecords, monthKey)}</tbody>
                   <tfoot>
                     <tr class="security-total-row">
                       <td colspan="3">${monthLabel(monthKey)} Total</td>
@@ -5101,6 +5227,18 @@
           e.stopPropagation();
           const mk = btn.dataset.monthPdf;
           exportSecurityPdf(byMonth[mk], mk);
+        });
+      });
+
+      // Employee group row toggles
+      document.querySelectorAll("[data-toggle-emp]").forEach(row => {
+        row.addEventListener("click", () => {
+          const groupId = row.dataset.toggleEmp;
+          const isOpen = row.classList.contains("open");
+          row.classList.toggle("open", !isOpen);
+          document.querySelectorAll(`[data-emp-group="${groupId}"]`).forEach(weekRow => {
+            weekRow.classList.toggle("hidden", isOpen);
+          });
         });
       });
     }
