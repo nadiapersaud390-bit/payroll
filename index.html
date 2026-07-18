@@ -3215,6 +3215,7 @@
 
     onValue(ref(db, "employees"), snapshot => {
       employees = snapshot.val() || {};
+      _employeeKeyCache = null; // clear stale cache whenever employees refresh
       renderEmployees();
     });
 
@@ -4636,13 +4637,33 @@
       );
     }
 
+    // Resolve a history row's employeeId to the correct Firebase push key.
+    // Records saved via the form already store the Firebase key; records
+    // imported from CSV store the custom employee ID string.  This helper
+    // searches employees by custom ID then by name as a fallback.
+    let _employeeKeyCache = null;
+    function resolveEmployeeFirebaseKey(row) {
+      if (employees[row.employeeId]) return row.employeeId; // already a Firebase key
+      if (!_employeeKeyCache) {
+        _employeeKeyCache = {};
+        Object.entries(employees).forEach(([key, emp]) => {
+          if (emp.employeeId) _employeeKeyCache[emp.employeeId] = key;
+          if (emp.name)       _employeeKeyCache[emp.name]       = key;
+        });
+      }
+      return _employeeKeyCache[row.employeeId] ||
+             _employeeKeyCache[row.employeeName] ||
+             row.employeeId;
+    }
+
     function summaryArray() {
       const summary = {};
 
       historyArray().filter(recordMatchesActiveDepartment).forEach(row => {
-        if (!summary[row.employeeId]) {
-          summary[row.employeeId] = {
-            employeeId: row.employeeId,
+        const key = resolveEmployeeFirebaseKey(row);
+        if (!summary[key]) {
+          summary[key] = {
+            employeeId: key,
             employeeName: row.employeeName,
             payrollCount: 0,
             hours: 0,
@@ -4650,10 +4671,10 @@
           };
         }
 
-        summary[row.employeeId].payrollCount += 1;
-        summary[row.employeeId].hours +=
+        summary[key].payrollCount += 1;
+        summary[key].hours +=
           Number(row.totalHours || 0);
-        summary[row.employeeId].earnings +=
+        summary[key].earnings +=
           Number(row.grossPay || 0);
       });
 
