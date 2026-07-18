@@ -1900,7 +1900,6 @@
                 <th>Day</th>
                 <th>Clock In</th>
                 <th>Clock Out</th>
-                <th>Break (min)</th>
                 <th>Hours</th>
                 <th class="day-pay-column">Day Pay Amount</th>
               </tr>
@@ -2437,9 +2436,6 @@
             </select>
           </div>
         </td>
-        <td class="time-cell break-cell">
-          <input class="break" type="number" min="0" value="0">
-        </td>
         <td><span class="hours-display">0.00</span></td>
         <td class="day-pay-cell">
           <div class="day-pay-entry" style="display:flex">
@@ -2623,7 +2619,7 @@
       };
     }
 
-    function hoursBetween(start, end, breakMinutes = 0, startPeriod = "AM", endPeriod = "PM") {
+    function hoursBetween(start, end, startPeriod = "AM", endPeriod = "PM") {
       const startMinutes = timeToMinutes(start, startPeriod);
       const endMinutes = timeToMinutes(end, endPeriod);
 
@@ -2637,12 +2633,7 @@
         minutes += 1440;
       }
 
-      minutes = Math.max(
-        0,
-        minutes - Number(breakMinutes || 0)
-      );
-
-      return minutes / 60;
+      return Math.max(0, minutes) / 60;
     }
 
     function employeeSearchText(employee) {
@@ -2968,7 +2959,7 @@
       document
         .querySelectorAll("#timeRows input")
         .forEach(input => {
-          input.value = input.classList.contains("break") ? "0" : "";
+          input.value = "";
         });
 
       setPayMode("hourly");
@@ -3023,7 +3014,6 @@
             const hrs = hoursBetween(
               row.querySelector(".clock-in").value,
               row.querySelector(".clock-out").value,
-              row.querySelector(".break").value,
               row.querySelector(".clock-in-period").value,
               row.querySelector(".clock-out-period").value
             );
@@ -3034,7 +3024,6 @@
             const hours = hoursBetween(
               row.querySelector(".clock-in").value,
               row.querySelector(".clock-out").value,
-              row.querySelector(".break").value,
               row.querySelector(".clock-in-period").value,
               row.querySelector(".clock-out-period").value
             );
@@ -3885,7 +3874,6 @@
           row.querySelector(".clock-in-period").value = clockInDisplay.period;
           row.querySelector(".clock-out").value = clockOutDisplay.time;
           row.querySelector(".clock-out-period").value = clockOutDisplay.period;
-          row.querySelector(".break").value = time.breakMinutes ?? 0;
           row.querySelector(".day-pay-amount").value = time.dayPayAmount ?? "";
         });
 
@@ -3951,7 +3939,6 @@
               normalizeVisibleTimeInput(row.querySelector(".clock-out"));
 
               const dayPayAmount = Number(row.querySelector(".day-pay-amount").value || 0);
-              const breakMinutes = Number(row.querySelector(".break").value || 0);
               const clockIn = timeToFirebaseValue(
                 row.querySelector(".clock-in").value,
                 row.querySelector(".clock-in-period").value
@@ -3963,7 +3950,6 @@
               const dayPayHours = hoursBetween(
                 row.querySelector(".clock-in").value,
                 row.querySelector(".clock-out").value,
-                breakMinutes,
                 row.querySelector(".clock-in-period").value,
                 row.querySelector(".clock-out-period").value
               );
@@ -3973,7 +3959,6 @@
                 dayPayAmount,
                 in: clockIn,
                 out: clockOut,
-                breakMinutes,
                 ...(dayPayHours > 0 && { dayPayHours })
               };
               dayHours[day] = dayPayHours;
@@ -3998,20 +3983,14 @@
                   row.querySelector(".clock-out-period").value
                 );
 
-              const breakMinutes = Number(
-                row.querySelector(".break").value || 0
-              );
-
               times[day] = {
                 in: clockIn,
-                out: clockOut,
-                breakMinutes
+                out: clockOut
               };
 
               dayHours[day] = hoursBetween(
                 row.querySelector(".clock-in").value,
                 row.querySelector(".clock-out").value,
-                breakMinutes,
                 row.querySelector(".clock-in-period").value,
                 row.querySelector(".clock-out-period").value
               );
@@ -4071,10 +4050,7 @@
         document
           .querySelectorAll("#timeRows input")
           .forEach(input => {
-            input.value =
-              input.classList.contains("break")
-                ? "0"
-                : "";
+            input.value = "";
           });
 
         setCurrentPayrollWeek();
