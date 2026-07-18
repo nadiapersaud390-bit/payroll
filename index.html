@@ -452,6 +452,12 @@
       font-size: 13px;
     }
 
+    .dept-group-header .dept-check-cell {
+      width: 36px;
+      padding: 8px 0 8px 14px;
+      vertical-align: middle;
+    }
+
     .dept-group-pill {
       display: inline-flex;
       align-items: center;
@@ -4224,14 +4230,15 @@
       $("historyRecordCount").textContent =
         `${rows.length} ${rows.length === 1 ? "record" : "records"}`;
 
-      function historyRowHtml(row) {
+      function historyRowHtml(row, dept) {
+        const deptAttr = dept !== undefined ? ` data-dept="${escapeHtml(dept)}"` : "";
         return `
           <tr>
             <td>
               <input
                 type="checkbox"
                 class="row-check history-row-check"
-                value="${row.id}"
+                value="${row.id}"${deptAttr}
               >
             </td>
 
@@ -4317,6 +4324,9 @@
         const weekIndex = historyWeekPage;
         const weekRows = week.rows;
         let html = "";
+        const periodLabel = week.start && week.end
+          ? `${week.start} to ${week.end}`
+          : week.end || week.start || "Date unavailable";
 
         {
           const weekHours = weekRows.reduce(
@@ -4327,9 +4337,6 @@
             (sum, row) => sum + Number(row.grossPay || 0),
             0
           );
-          const periodLabel = week.start && week.end
-            ? `${week.start} to ${week.end}`
-            : week.end || week.start || "Date unavailable";
 
           html += `
             <tr class="history-week-header">
@@ -4401,7 +4408,15 @@
 
             html += `
               <tr class="dept-group-header" style="background:${meta.bg}">
-                <td colspan="8">
+                <td class="dept-check-cell">
+                  <input
+                    type="checkbox"
+                    class="row-check dept-group-check"
+                    data-dept="${escapeHtml(dept)}"
+                    aria-label="Select all ${escapeHtml(meta.label)} rows"
+                  >
+                </td>
+                <td colspan="7">
                   <span
                     class="dept-group-pill"
                     style="background:${meta.bg};color:${meta.fg};border-color:${meta.border}"
@@ -4418,7 +4433,7 @@
             `;
 
             group.forEach(row => {
-              html += historyRowHtml(row);
+              html += historyRowHtml(row, dept);
             });
           });
         }
@@ -4470,6 +4485,17 @@
             syncSelectAll
           );
         });
+
+      document.querySelectorAll(".dept-group-check").forEach(deptCb => {
+        deptCb.addEventListener("change", () => {
+          const dept = deptCb.dataset.dept;
+          document.querySelectorAll(".history-row-check").forEach(cb => {
+            if (cb.dataset.dept === dept) cb.checked = deptCb.checked;
+          });
+          deptCb.indeterminate = false;
+          syncSelectAll();
+        });
+      });
     }
 
     function setAllHistoryRows(checked) {
@@ -4481,6 +4507,11 @@
 
       $("selectAllHistory").checked = checked;
       $("selectAllHistoryTable").checked = checked;
+
+      document.querySelectorAll(".dept-group-check").forEach(cb => {
+        cb.checked = checked;
+        cb.indeterminate = false;
+      });
     }
 
     function syncSelectAll() {
@@ -4498,6 +4529,16 @@
 
       $("selectAllHistory").checked = allChecked;
       $("selectAllHistoryTable").checked = allChecked;
+
+      // Sync each department header checkbox state
+      document.querySelectorAll(".dept-group-check").forEach(deptCb => {
+        const dept = deptCb.dataset.dept;
+        const deptCbs = checkboxes.filter(cb => cb.dataset.dept === dept);
+        const allDeptChecked = deptCbs.length > 0 && deptCbs.every(cb => cb.checked);
+        const someDeptChecked = deptCbs.some(cb => cb.checked);
+        deptCb.checked = allDeptChecked;
+        deptCb.indeterminate = !allDeptChecked && someDeptChecked;
+      });
     }
 
     $("selectAllHistory").addEventListener(
