@@ -3526,7 +3526,7 @@
       });
     }
 
-    function openEmployeeProfile(employeeId) {
+    function openEmployeeProfile(employeeId, { breakdownOnly = false } = {}) {
       // Strategy 1: direct Firebase push-key lookup
       let employee = employees[employeeId];
       let resolvedKey = employeeId;
@@ -3551,9 +3551,15 @@
       employeeId = resolvedKey;
       selectedEmployeeProfileId = employeeId;
       const isActive = employee.active !== false;
-      const stats = employeePayrollStats(employeeId);
       $("employeeProfileName").textContent = employee.name || "Employee";
-      $("employeeProfileContent").innerHTML = `
+
+      if (breakdownOnly) {
+        // Show only the payroll breakdown — no profile fields or action buttons
+        $("employeeProfileContent").innerHTML = `
+          <div id="employeePayrollBreakdown" class="employee-payroll-breakdown hidden"></div>`;
+      } else {
+        const stats = employeePayrollStats(employeeId);
+        $("employeeProfileContent").innerHTML = `
         <div class="profile-hero">
           ${employeeAvatarMarkup(employee, "profile-avatar")}
           <div>
@@ -3589,32 +3595,35 @@
           <button class="btn primary" type="button" data-profile-edit="${employeeId}">Edit Profile</button>
           <button class="danger" type="button" data-profile-delete="${employeeId}">Delete</button>
         </div>`;
+      }
       $("employeeProfileModal").classList.remove("hidden");
       document.body.style.overflow = "hidden";
 
-      // Auto-show full payment breakdown immediately
+      // Always render the payroll breakdown
       renderEmployeePayrollBreakdown(employeeId, { skipScroll: true });
 
-      // Stat buttons now just scroll to the already-visible breakdown
-      $("employeeProfileContent").querySelectorAll("[data-open-payroll-breakdown]").forEach(button => {
-        button.addEventListener("click", () => {
-          const breakdown = $("employeePayrollBreakdown");
-          if (breakdown) breakdown.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (!breakdownOnly) {
+        // Stat buttons scroll to the already-visible breakdown
+        $("employeeProfileContent").querySelectorAll("[data-open-payroll-breakdown]").forEach(button => {
+          button.addEventListener("click", () => {
+            const breakdown = $("employeePayrollBreakdown");
+            if (breakdown) breakdown.scrollIntoView({ behavior: "smooth", block: "start" });
+          });
         });
-      });
-      $("employeeProfileContent").querySelector("[data-profile-toggle]").addEventListener("click", async e => {
-        const id = e.currentTarget.dataset.profileToggle;
-        const current = employees[id];
-        if (!current) return;
-        await set(ref(db, `employees/${id}`), { ...current, active: !(e.currentTarget.dataset.active === "true"), updatedAt: new Date().toISOString() });
-        closeEmployeeProfile();
-      });
-      $("employeeProfileContent").querySelector("[data-profile-delete]").addEventListener("click", async e => {
-        const id = e.currentTarget.dataset.profileDelete;
-        if (!confirm("Delete this employee? Payroll history will remain.")) return;
-        await remove(ref(db, `employees/${id}`));
-        closeEmployeeProfile();
-      });
+        $("employeeProfileContent").querySelector("[data-profile-toggle]").addEventListener("click", async e => {
+          const id = e.currentTarget.dataset.profileToggle;
+          const current = employees[id];
+          if (!current) return;
+          await set(ref(db, `employees/${id}`), { ...current, active: !(e.currentTarget.dataset.active === "true"), updatedAt: new Date().toISOString() });
+          closeEmployeeProfile();
+        });
+        $("employeeProfileContent").querySelector("[data-profile-delete]").addEventListener("click", async e => {
+          const id = e.currentTarget.dataset.profileDelete;
+          if (!confirm("Delete this employee? Payroll history will remain.")) return;
+          await remove(ref(db, `employees/${id}`));
+          closeEmployeeProfile();
+        });
+      }
     }
 
     function renderEmployees() {
@@ -4757,8 +4766,7 @@
         if (!btn) return;
         const id   = btn.dataset.viewEmployee;
         const name = btn.dataset.viewEmployeeName;
-        // Try by Firebase key first; openEmployeeProfile will fall back to name
-        openEmployeeProfile(id || name);
+        openEmployeeProfile(id || name, { breakdownOnly: true });
       };
     }
 
