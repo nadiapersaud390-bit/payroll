@@ -3461,7 +3461,7 @@
       return Number.isNaN(date.getTime()) ? String(value) : date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
     }
 
-    function renderEmployeePayrollBreakdown(employeeId) {
+    function renderEmployeePayrollBreakdown(employeeId, { skipScroll = false } = {}) {
       const container = $("employeePayrollBreakdown");
       const records = employeePayrollRecords(employeeId);
       const grouped = {};
@@ -3513,7 +3513,7 @@
       `;
 
       container.classList.remove("hidden");
-      container.scrollIntoView({ behavior: "smooth", block: "start" });
+      if (!skipScroll) container.scrollIntoView({ behavior: "smooth", block: "start" });
       container.querySelector("[data-close-payroll-breakdown]").addEventListener("click", () => container.classList.add("hidden"));
       container.querySelectorAll("[data-toggle-employee-month]").forEach(button => {
         button.addEventListener("click", () => {
@@ -3553,9 +3553,9 @@
           <div class="profile-field"><span>NIS employee rate</span><strong>${employee.nisRate != null ? `${Number(employee.nisRate).toFixed(2)}%` : "Not set"}</strong></div>
           <div class="profile-field"><span>NIS calculation amount</span><strong>${employee.nisCalculationAmount ? money(employee.nisCalculationAmount) : "Not set"}</strong></div>
           <div class="profile-field profile-notes"><span>NIS calculation example</span><strong>${employee.nisRate != null && employee.nisCalculationAmount ? `${money(employee.nisCalculationAmount)} × ${Number(employee.nisRate).toFixed(2)}% = ${money(Number(employee.nisCalculationAmount) * Number(employee.nisRate) / 100)}` : "Add an NIS rate and calculation amount to calculate the deduction."}</strong></div>
-          <button class="profile-stat-button" type="button" data-open-payroll-breakdown="records"><span>Payroll records</span><strong>${stats.records}</strong><small>Click to view weekly and monthly breakdown</small></button>
-          <button class="profile-stat-button" type="button" data-open-payroll-breakdown="hours"><span>Total hours recorded</span><strong>${stats.hours.toFixed(2)}</strong><small>Click to view hours by week</small></button>
-          <button class="profile-stat-button" type="button" data-open-payroll-breakdown="earned"><span>Total earned</span><strong>${money(stats.earned)}</strong><small>Click to view monthly earnings</small></button>
+          <button class="profile-stat-button" type="button" data-open-payroll-breakdown="records"><span>Payroll records</span><strong>${stats.records}</strong><small>Jump to breakdown ↓</small></button>
+          <button class="profile-stat-button" type="button" data-open-payroll-breakdown="hours"><span>Total hours recorded</span><strong>${stats.hours.toFixed(2)}</strong><small>Jump to breakdown ↓</small></button>
+          <button class="profile-stat-button" type="button" data-open-payroll-breakdown="earned"><span>Total earned</span><strong>${money(stats.earned)}</strong><small>Jump to breakdown ↓</small></button>
           <div class="profile-field"><span>Date added</span><strong>${employee.createdAt ? new Date(employee.createdAt).toLocaleDateString() : "Not available"}</strong></div>
           <div class="profile-field"><span>Last updated</span><strong>${employee.updatedAt ? new Date(employee.updatedAt).toLocaleDateString() : "Not available"}</strong></div>
           <div class="profile-field profile-notes"><span>Notes</span><strong>${escapeHtml(employee.notes || "No notes added.")}</strong></div>
@@ -3568,8 +3568,16 @@
         </div>`;
       $("employeeProfileModal").classList.remove("hidden");
       document.body.style.overflow = "hidden";
+
+      // Auto-show full payment breakdown immediately
+      renderEmployeePayrollBreakdown(employeeId, { skipScroll: true });
+
+      // Stat buttons now just scroll to the already-visible breakdown
       $("employeeProfileContent").querySelectorAll("[data-open-payroll-breakdown]").forEach(button => {
-        button.addEventListener("click", () => renderEmployeePayrollBreakdown(employeeId));
+        button.addEventListener("click", () => {
+          const breakdown = $("employeePayrollBreakdown");
+          if (breakdown) breakdown.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
       });
       $("employeeProfileContent").querySelector("[data-profile-toggle]").addEventListener("click", async e => {
         const id = e.currentTarget.dataset.profileToggle;
